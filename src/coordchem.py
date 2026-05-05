@@ -241,6 +241,17 @@ def count_bridging_ligands(formula):
     return num
 
 
+# ===  Function which put the metal and ligands in a same list with their respective stoechiometric coefficient === #
+def parse_elements(formula):
+    elements = []
+    elements.extend(ligands_list(formula))
+    elements.extend(parse_metal(formula)*len(parse_metal(formula)))
+    # We also verify that there is no bridging ligand if there is only one metal center
+    if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
+        raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
+    return elements
+
+
 # ==========================================
 # COMPLEXE ANALYSIS FUNCTIONS
 # ==========================================
@@ -248,23 +259,10 @@ def count_bridging_ligands(formula):
 # ------------------------------------------------------------------------------------------------------------ j'ai fait jusqu ici la mise en page du code ---------------
 
 
-# Function which return the charge of the coordination sphere as an int
+# === Function which return the charge of the coordination sphere as an int === #
 def complexe_charge(formula):
-    charge = re.search(r"\]([0-9+-]+)", formula)
-    if not charge:
-        return 0
-    return transform_charge(charge.group(1))
-
-
-# Function which put the metal and ligands in a same list with their respective stoechiometric coefficient
-def parse_elements(formula):
-    elements = []
-    elements.extend(ligands_list(formula))
-    elements.extend(parse_metal(formula))
-    # We also verify that there is no bridging ligand if there is only one metal center
-    if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
-        raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
-    return elements
+    match = formula_format_verification(formula)
+    return transform_charge(match.group(7)) if match.group(7) else 0
 
 
 # Function which calulate the sum of all ligands' charges
