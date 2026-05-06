@@ -5,11 +5,11 @@
 import json
 import re
 import string
-import sys
 from pathlib import Path
 
 import numpy as np
 import roman
+from ase import Atoms
 from IPython.display import Markdown, display
 
 # ==========================================
@@ -17,21 +17,8 @@ from IPython.display import Markdown, display
 # ==========================================
 
 
-def hide_traceback(
-    exc_tuple=None,
-    filename=None,
-    tb_offset=None,
-    exception_only=False,
-    running_compiled_code=False,
-):
-    etype, value, tb = sys.exc_info()
-    return print(f"{value}")  # Only display the error message without the traceback
+# ???
 
-
-try:
-    ipython = get_ipython()
-except NameError:
-    pass
 
 # ==========================================
 # LOADING DATA
@@ -102,10 +89,10 @@ def transform_charge(charge):
 
 
 # ==========================================
-# FORMULA FORMAT VERIFICATION AND PARSING
+# FORMAT VERIFICATION AND PARSING SECTION
 # ==========================================
 
-formula = "[Fe1(CN)3(m-H2O)2(en)2]-2"
+formula = "[Fe2(CN)4(m-H2O)2(en)2]2-"
 
 
 # === We use a function to verify the format of the formula === #
@@ -155,7 +142,8 @@ def parse_metal(formula):
     metal = match.group(2)
     if match.group(3) is None:
         coeff = 1
-    coeff = int(match.group(3))
+    else:
+        coeff = int(match.group(3))
     # We test if the metal is present in the database and treat the output if not
     if metal not in data_metals:
         raise ValueError(f"Error: Metal {metal} is not in the database.")
@@ -245,7 +233,7 @@ def count_bridging_ligands(formula):
 def parse_elements(formula):
     elements = []
     elements.extend(ligands_list(formula))
-    elements.extend(parse_metal(formula)*len(parse_metal(formula)))
+    elements.extend(parse_metal(formula))
     # We also verify that there is no bridging ligand if there is only one metal center
     if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
         raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
@@ -253,10 +241,8 @@ def parse_elements(formula):
 
 
 # ==========================================
-# COMPLEXE ANALYSIS FUNCTIONS
+# COMPLEXE ANALYSIS SECTION
 # ==========================================
-
-# ------------------------------------------------------------------------------------------------------------ j'ai fait jusqu ici la mise en page du code ---------------
 
 
 # === Function which return the charge of the coordination sphere as an int === #
@@ -265,10 +251,11 @@ def complexe_charge(formula):
     return transform_charge(match.group(7)) if match.group(7) else 0
 
 
-# Function which calulate the sum of all ligands' charges
+# === Function which calulate the sum of all ligands' charges === #
 def ligands_charge(formula):
     ligands = ligands_list(formula)
     charge = 0
+    # We seperate the case of terminal or chelating/bridging ligands
     for ligand in ligands:
         if not ligand.startswith("m-"):
             charge += data_ligands[ligand]["charge"]
@@ -277,7 +264,7 @@ def ligands_charge(formula):
     return charge
 
 
-# Function which calulate the charge of the metal center (MX+ or MX-)
+# === Function which calulate the charge of the metal center (i.e. MX+ or MX-) === #
 def metal_charge(formula):
     charge = (complexe_charge(formula) - ligands_charge(formula)) // len(
         parse_metal(formula)
@@ -285,62 +272,89 @@ def metal_charge(formula):
     return charge
 
 
-# Fonction which calulate the ox. state of the metal center (dX)
+# === Function which calulate the oxidation state of the metal center (i.e. dX) === #
 def oxidation_state(formula):
     metals = parse_metal(formula)
-
+    # The oxidation state is calculated by : group of the metal - charge of the metal center
     ox_state = data_metals[metals[0]]["group"] - metal_charge(formula)
-    if ox_state < 0 or ox_state > 10:
-        raise ValueError("Error: There is too extreme charge")
-    return ox_state
+
+    possible_ox_state = data_metals[metals[0]]["possible_ox_state"]
+    # We compare the calculated oxidation state with the database and return a remark if the metal is not likely to be in this oxidation state
+    if metal_charge(formula) not in possible_ox_state:
+        sign = "+" if metal_charge(formula) > 0 else ""
+        remark = (
+            "The following compound is not likely to exist because the metal center cannot be in the oxidation state "
+            + sign
+            + str(metal_charge(formula))
+            + " according to the database"
+        )
+    else:
+        remark = None
+    # We return an error if the oxidation state is too large or too small to rule very impossible compounds, thus the limit is +10 and -5
+    # (We let +10,+9,+8... and some negative values because we'd like our program to compute even not possible compounds to let the user understand why they are not possible)
+    if ox_state < 0 or ox_state > 12:
+        raise ValueError(
+            f"Error: The oxidation state {sign}{str(metal_charge(formula))} of the metal center is impossible, try changing the formula"
+        )
+    return ox_state, remark
 
 
-# Function which does the electron counting
+# === Function which does the electron counting. We use the ionic counting method === #
 def electron_count(formula):
-    metal = parse_metal(formula)[0]
-    d = oxidation_state(formula)
-
-    electrons = d
-
+    # We first set the number of electrons as the contributtion of the metal/s center/s
+    electrons = oxidation_state(formula)[0] * len(parse_metal(formula))
+    # We then add the contribution of each ligand according to the database and of the ligand type
     for ligand in ligands_list(formula):
         if ligand.startswith("m-"):
             electrons += data_ligands[ligand[2:]]["bridging_e"]
         else:
             electrons += data_ligands[ligand]["donor_e"]
-
+    # We add the contribution of the bond between the metal centers if there is one
     electrons += 2 * bond_order(formula)
+    # We verify that the electron count yields an even number when dealing with a dinuclear complex because electrons are supposed to be equaly shared
+    # beetween both metal centers
+    if len(parse_metal(formula)) == 2 and electrons % 2 != 0:
+        raise ValueError(
+            "Error: The number of electrons is not an integer, check the formula."
+        )
+    # We finally return the number of electrons, however, if there are two metal centers,
+    # we divide the number of electrons by 2 because the electrons are shared between the two metal centers (we can do that because all complexes are symetrical)
+    return int(electrons) // 2 if len(parse_metal(formula)) == 2 else int(electrons)
 
-    return int(electrons)
 
-
-# Function which calulate the electroni structure of the metal
+# === Function which calulate the electroni structure of the metal === #
 def electronic_structure(formula):
+    # We set the data needed and we create a list to stock the result
     metals = parse_metal(formula)
     per = 0
     list = []
-
-    # We first deal with the period and which noble gaz is the base of the electronic structure (both metals are the same so their period is also the same)
+    # We deal with the period and which noble gas is the base of the electronic structure
+    # (both metals are the same so their period is also the same)
     per += data_metals[metals[0]]["period"]
     inert_gas = {4: "Ar", 5: "Kr", 6: "Xe"}
-
-    # Then, we deal with the As^b Cd^e part, also, we seperate if the charge is negative/ between 0-2/ > 2, because it is the s 2 electrons that are first removed
+    # We deal with the As^b Cd^e part, also, we separate the cases: negative charge/ charge between 0-2 / charge > 2, because it is the s 2 electrons that are first removed
     if metal_charge(formula) == 0 or metal_charge(formula) == 2:
         s = 2 - metal_charge(formula)
-        d = oxidation_state(formula) - s
+        d = oxidation_state(formula)[0] - s
     elif (
         metal_charge(formula) >= 3 or metal_charge(formula) == 1
-    ):  # Because the only electron in the s orbital fall into the d orbital, because lower in energy
+    ):  # Because a lonely electron in the s orbital fall into the d orbital as the latter is lower in energy
         s = 0
-        d = oxidation_state(formula)
+        d = oxidation_state(formula)[0]
     else:
         s = 2
-        d = oxidation_state(formula) - 2
-
+        d = oxidation_state(formula)[0] - 2
+    # We return the electronic structure as a list which we can easily use later to display it in the final result
     list.extend([inert_gas.get(per), per, s, d])
     return list
 
 
-# =============================================================================================================================================================== #
+# ==========================================
+# NAMING COORDINATION COMPOUNDS SECTION
+# ==========================================
+
+# We first set two sets of useful prefixes for the nomenclature of compounds.
+# first one is used in general but the second one is used for some specific ligands (see IUPAC rules)
 
 coeff_name1 = {
     1: "",
@@ -353,6 +367,14 @@ coeff_name1 = {
     8: "octa",
     9: "nona",
     10: "deca",
+    11: "undeca",
+    12: "dodeca",
+    13: "trideca",
+    14: "tetradeca",
+    15: "pentadeca",
+    16: "hexadeca",
+    # No experimentally confirmed coordination compound with more than 16 ligands exist so we stop at 16.
+    # Even 16 is exceptional and only for small ligands like H,O ...
 }
 
 coeff_name2 = {
@@ -366,30 +388,44 @@ coeff_name2 = {
     8: "octakis",
     9: "nonakis",
     10: "decakis",
+    11: "undecakis",
+    12: "dodecakis",
+    13: "tridecakis",
+    14: "tetradecakis",
+    15: "pentadecakis",
+    16: "hexadecakis",
+    # No experimentally confirmed coordination compound with more than 16 ligands exist so we stop at 16.
+    # Even 16 is exceptional and only for small ligands like H,O ...
 }
 
 
+# === Function which returns the name of the ligand while considering bridging ligands and nomenclature exceptions === #
 def name_ligand(ligand):
     n = 0
+    # If the ligand is bridging we set n = 2 to remove the "m-" at the beginning of the ligand name
     if ligand.startswith("m-"):
         n = 2
     if (
         data_ligands[ligand[n:]].get("nomenclature") is not None
-    ):  # Generally the name is used in the nomenclature but no always.
+    ):  # The ligand's name is almost always used in the nomenclature. We add if there is an exception a nomenclature key in the database
         return data_ligands[ligand[n:]]["nomenclature"]
     else:
         return data_ligands[ligand[n:]]["name"]
 
 
+# === Function which decides whether to use the second set of prefixes from the database === #
 def should_use_the_coeff_name2(ligand_name):
     for ligand in data_ligands.values():
-        if ligand["name"] == ligand_name and ligand.get("coeff") == "yes":
+        if (
+            ligand["name"] == ligand_name and ligand.get("coeff") == "yes"
+        ):  # The coeff key in the database is set to yes if the second set of prefixes should be used
             return True
     return False
 
 
+# === Function which returns the IUPAC name of the input coordination compound === #
 def naming_compound(formula):
-    # 1. We set the data nedded
+    # We set the data nedded and empty list or string to stock the result
     parsed_data = parse_ligands(formula)
     ligands = parsed_data[0]
     coeffs = parsed_data[1]
@@ -399,44 +435,42 @@ def naming_compound(formula):
     mu = "-" + "\u03bc" + "-"
     last_parenthesis = False
 
-    # 2. We indentify the the bridging ligands by transforming their coefficient to a negative value (no chimical sense just easier to inditify later)
+    # We first sort the ligands in alphabetic order and keep their respective coefficients by putting them in a list of tuple (ligand(sorted), coeff)
     for n in range(len(ligands)):
-        if ligands[n].startswith("m-"):
-            coeffs[n] *= -1
-        # 3. Ligands as name ou abbr and are sortes by alphabetic order
         ligand_name = name_ligand(ligands[n])
         ligands_with_coeffs.append((ligand_name, coeffs[n]))
     ligands_with_coeffs.sort(key=lambda x: x[0].lower())
 
-    # 4. Metal as name (primary or secondary)
+    # We transform the metal as its name. We use the secondary name of the metal if the corrdination sphere is charged negatively
     if complexe_charge(formula) < 0:
         metal_name = data_metals[metals[0]]["secondary_name"]
     else:
         metal_name = data_metals[metals[0]]["name"]
 
-    # 5. We seperate the cases
-
-    # -------------BRIDGING LIGANDS---------------#
-    for i, (ligand_name, coeff) in enumerate(ligands_with_coeffs):
+    # We start the naming process by separating the cases :
+    # 1. BRIDGING LIGANDS
+    for ligand_name, coeff in ligands_with_coeffs:
         if coeff < 0:
-            bridging = mu
             if (
-                should_use_the_coeff_name2(ligand_name) == True
+                should_use_the_coeff_name2(ligand_name) is True
             ):  # We seperate the case where we have to use the second type of prefixes according to the ligand (IUPAC rules)
+                # If we use the second set of prefixes the ligand name must be within parenthesis
                 prefixe_ligand = coeff_name2[coeff * -1]
-                name += f"{bridging}{prefixe_ligand}({ligand_name})"
+                name += f"{mu}{prefixe_ligand}({ligand_name})"  # We add the "mu" symbol in both case beacuse the ligand is bridging
             else:
                 prefixe_ligand = coeff_name1[coeff * -1]
-                name += bridging + prefixe_ligand + ligand_name
+                name += mu + prefixe_ligand + ligand_name
 
-    n = 1
-    # ------------- 2 METALS ---------------#
-
+    # 2. DINUCLEAR COMPLEXES WITH NON-BRIDGING LIGANDS
+    n = 1  # We set n = 1 by default. This number will alows us to devide by two the coefficients in case of a symmetric binuclear complex
     if (
         len(metals) == 2
-        and len(ligands_list(formula)) - count_bridging_ligands(formula) > 0
+        and len(ligands_list(formula)) - count_bridging_ligands(formula)
+        > 0  # We verify if there is at least one non-bridging ligand and in this case we use the second set of prefixes
     ):
-        name += coeff_name2[2] + "("
+        name += (
+            coeff_name2[2] + "("
+        )  # We add parenthesis around the metal name and the ligands because of the use of the second set of prefixes
         n = 2
         last_parenthesis = True
     elif (
@@ -445,35 +479,46 @@ def naming_compound(formula):
     ):  # If there is only bridging ligands we use the first set of prefixes
         name += coeff_name1[2]
 
-    # ----------- TERMINAL LIGANDS---------------#
+    # Before deviding the coefficients by 2 in case of a dinuclear complex, we verify that the compound is well symmetric (to avoid having a float as the coefficient)
+    if len(metals) == 2:
+        for ligand_name, coeff in ligands_with_coeffs:
+            if coeff > 0 and coeff % 2 != 0:
+                raise ValueError(
+                    "Error: The compound is not symmetric, the coefficients of the non-bridging ligands must all be even integers"
+                )
+
+    # 3. TERMINAL LIGANDS
     for i, (ligand_name, coeff) in enumerate(ligands_with_coeffs):
         if coeff > 0:
-            if should_use_the_coeff_name2(ligand_name) == True:
+            if should_use_the_coeff_name2(ligand_name) is True:
+                # We divide the coefficient by 1 or 2 to take into account the case of symmetric binuclear complexes
                 prefixe_ligand = coeff_name2[coeff / n]
                 name += f"{prefixe_ligand}({ligand_name})"
             else:
                 prefixe_ligand = coeff_name1[coeff / n]
                 name += prefixe_ligand + ligand_name
 
-    # 6. We add the metal name and already put the capital at the begining (avoid interaction between .capitalize and roman numbers)
+    # We add the metal name and already put the capital at the begining (avoid unwanted interactions between .capitalize and roman numbers later)
     name += metal_name
     name = name.capitalize()
 
-    # 7. We add the charge according to preference selected in the site (roman/int)
+    # We add the charge according to preference selected in the site (roman/integer) !!not implemented yet, we use roman by default for the moment!!
 
     # charge_int = complexe_charge(formula)
     # name += (f"({charge_int})")
 
     charge = metal_charge(formula)
     charge_roman = roman.toRoman(abs(charge))
+
+    # We treat if the metal charge is zero or negative because roman. does not handle zero or negative input
     if charge == 0:
         charge_roman = 0
     elif charge < 0:
         charge_roman = "-" + roman.toRoman(abs(charge))
     name += f"({charge_roman})"
 
-    # 8. Last modifs of the name
-    if last_parenthesis == True:
+    # We make some last adjustements (e.g. adding parenthesis for dinuclear complexes, removing the "-" at the beginning of the name if the first ligand is bridging)
+    if last_parenthesis is True:
         name += ")"
     if name.startswith("-"):
         name = name[1:]
@@ -481,9 +526,11 @@ def naming_compound(formula):
     return name
 
 
-# =========================
-# STABILITY MODULE (NEW)
-# =========================
+# ==========================================
+# STABILITY ESTIMATION SECTION
+# ==========================================
+
+# ------------------------------------------------------------------------------------------------------------------------------- VERIFIE JUSQU ICI -------------------------------------------------------------------------------------------------------------------------------
 
 
 def ligand_field_strength(formula):
@@ -515,7 +562,6 @@ def crystal_field_stabilization(formula):
     """
     Approximation CFSE (très simplifiée)
     """
-    d = oxidation_state(formula)
     electrons = electron_count(formula)
 
     # approximation: d electron count influence
@@ -545,9 +591,9 @@ def stability_index(formula):
     return max(0, min(100, score))
 
 
-# =========================
-# ISOMERS
-# =========================
+# ==========================================
+# ISOMERS CALCULATION SECTION
+# ==========================================
 
 stereoisomers_dico = {
     "Ma6": 1,
@@ -561,6 +607,7 @@ stereoisomers_dico = {
     "Ma2b2c2": 6,
     "Ma2b2c1d1": 8,
     "Ma3b2c1": 3,
+    "Ma2b2": 2,
 }
 
 enantiomers_dico = {
@@ -575,6 +622,7 @@ enantiomers_dico = {
     "Ma2b2c2": 1,
     "Ma2b2c1d1": 2,
     "Ma3b2c1": 0,
+    "Ma2b2": 0,
 }
 
 
@@ -594,9 +642,17 @@ def isomers(formula):
         letter = alphabet[n]
         key += letter + str(number[n])
 
-    stereo = stereoisomers_dico.get(key)
-    enantio = enantiomers_dico.get(key)
-    return stereo, enantio
+    if key == "Ma2b2" and find_geometry(formula, 1) == [
+        (1, 0, 0),
+        (-1, 0, 0),
+        (0, 1, 0),
+        (0, -1, 0),
+    ]:
+        return 2, 0
+    else:
+        stereo = stereoisomers_dico.get(key)
+        enantio = enantiomers_dico.get(key)
+        return stereo, enantio
 
 
 # =============================================================================================================================================================== #
@@ -631,7 +687,7 @@ def analyze_complexe(formula):
     lines.append(f"* **Electron count** : {count}")
 
     # Isomers
-    if isomers(formula)[0] == None or isomers(formula)[1] == None:
+    if isomers(formula)[0] is None or isomers(formula)[1] is None:
         lines.append(
             "* **Isomers:** The number of isomers of this compound is not specified"
         )
@@ -641,7 +697,9 @@ def analyze_complexe(formula):
         )
 
     # Remarks
-    lines.append("* **Remarks:** ... ")
+    remarks = oxidation_state(formula)[1]
+    if remarks is not None:
+        lines.append(f"* **Remarks:** {remarks}")
 
     # Stability (NEW)
     stability = stability_index(formula)
@@ -661,9 +719,6 @@ def show_analysis(formula):
 # =============================================================================================================================================================== #
 # =============================================================================================================================================================== #
 # =============================================================================================================================================================== #
-
-
-from ase import Atoms
 
 # ------------------------------------------------------------
 # ------------------------------------------------------------
@@ -720,9 +775,9 @@ def find_geometry(formula, r):
         return linear(r)
     elif cn == 3:
         return trigonal_planar(r)
-    elif cn == 4 and oxidation_state(formula) == 8:
+    elif cn == 4 and oxidation_state(formula)[0] == 8:
         return square_planar(r)
-    elif cn == 4 and not oxidation_state(formula) == 8:
+    elif cn == 4 and not oxidation_state(formula)[0] == 8:
         return tetrahedral(r)
     elif cn == 5:
         return trigonal_bipyramidal(r)

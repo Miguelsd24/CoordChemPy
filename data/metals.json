@@ -6,6 +6,7 @@
     "preferred_geometry": "octahedral",
     "group": 3,
     "period": 4,
+    "possible_ox_state": [0,1,2,3],
 
     "HSAB": {
       "base_hardness": 8.2,
@@ -47,7 +48,7 @@
     "preferred_geometry": "octahedral",
     "group": 4,
     "period": 4,
-
+    "possible_ox_state": [-2,-1,0,1,2,3,4],
     "HSAB": {
       "base_hardness": 7.6,
       "effective_hardness": 7.8,
@@ -77,7 +78,7 @@
     "preferred_geometry": "octahedral",
     "group": 5,
     "period": 4,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
     "HSAB": {
       "base_hardness": 7.2,
       "effective_hardness": 7.3,
@@ -107,7 +108,7 @@
     "preferred_geometry": "octahedral",
     "group": 6,
     "period": 4,
-
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 6.9,
       "effective_hardness": 6.8,
@@ -137,7 +138,7 @@
     "preferred_geometry": "octahedral",
     "group": 7,
     "period": 4,
-
+    "possible_ox_state": [-3,-2,-1,0,1,2,3,4,5,6,7],
     "HSAB": {
       "base_hardness": 6.7,
       "effective_hardness": 6.5,
@@ -167,7 +168,7 @@
     "preferred_geometry": "octahedral",
     "group": 8,
     "period": 4,
-
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 6.5,
       "effective_hardness": 6.2,
@@ -197,7 +198,7 @@
     "preferred_geometry": "octahedral",
     "group": 9,
     "period": 4,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
     "HSAB": {
       "base_hardness": 6.3,
       "effective_hardness": 5.8,
@@ -227,7 +228,7 @@
     "preferred_geometry": "octahedral",
     "group": 10,
     "period": 4,
-
+    "possible_ox_state": [-2,-1,0,1,2,3,4],
     "HSAB": {
       "base_hardness": 6.1,
       "effective_hardness": 5.5,
@@ -257,7 +258,7 @@
     "preferred_geometry": "square_planar",
     "group": 11,
     "period": 4,
-
+    "possible_ox_state": [-2,0,1,2,3,4],
     "HSAB": {
       "base_hardness": 5.2,
       "effective_hardness": 4.8,
@@ -287,7 +288,7 @@
     "preferred_geometry": "tetrahedral",
     "group": 12,
     "period": 4,
-
+    "possible_ox_state": [-2,0,1,2],
     "HSAB": {
       "base_hardness": 7.9,
       "effective_hardness": 7.8,
@@ -316,7 +317,7 @@
     "preferred_geometry": "octahedral",
     "group": 3,
     "period": 5,
-
+    "possible_ox_state": [0,1,2,3],
     "HSAB": {
       "base_hardness": 8.0,
       "effective_hardness": 8.3,
@@ -345,7 +346,7 @@
     "preferred_geometry": "octahedral",
     "group": 4,
     "period": 5,
-
+    "possible_ox_state": [-2,0,1,2,3,4],
     "HSAB": {
       "base_hardness": 7.5,
       "effective_hardness": 7.7,
@@ -374,7 +375,7 @@
     "preferred_geometry": "octahedral",
     "group": 5,
     "period": 5,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
     "HSAB": {
       "base_hardness": 7.0,
       "effective_hardness": 7.1,
@@ -403,7 +404,7 @@
     "preferred_geometry": "octahedral",
     "group": 6,
     "period": 5,
-
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 6.6,
       "effective_hardness": 6.4,
@@ -432,7 +433,7 @@
     "preferred_geometry": "octahedral",
     "group": 7,
     "period": 5,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6,7],
     "HSAB": {
       "base_hardness": 6.4,
       "effective_hardness": 6.1,
@@ -461,7 +462,7 @@
     "preferred_geometry": "octahedral",
     "group": 8,
     "period": 5,
-
+    "possible_ox_state": [-4,-2,0,1,2,3,4,5,6,7,8],
     "HSAB": {
       "base_hardness": 6.2,
       "effective_hardness": 5.8,
@@ -491,7 +492,7 @@
     "preferred_geometry": "octahedral",
     "group": 9,
     "period": 5,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 5.8,
       "effective_hardness": 5.3,
@@ -521,7 +522,7 @@
     "preferred_geometry": "square_planar",
     "group": 10,
     "period": 5,
-
+    "possible_ox_state": [0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 4.8,
       "effective_hardness": 4.2,
@@ -551,7 +552,7 @@
     "preferred_geometry": "linear",
     "group": 11,
     "period": 5,
-
+    "possible_ox_state": [-2,-1,0,1,2,3,4],
     "HSAB": {
       "base_hardness": 4.5,
       "effective_hardness": 4.0,
@@ -580,7 +581,7 @@
     "preferred_geometry": "tetrahedral",
     "group": 12,
     "period": 5,
-
+    "possible_ox_state": [-2,0,1,2],
     "HSAB": {
       "base_hardness": 6.9,
       "effective_hardness": 6.8,
@@ -609,7 +610,7 @@
     "preferred_geometry": "octahedral",
     "group": 4,
     "period": 6,
-
+    "possible_ox_state": [-2,0,1,2,3,4],
     "HSAB": {
       "base_hardness": 7.6,
       "effective_hardness": 7.8,
@@ -638,7 +639,7 @@
     "preferred_geometry": "octahedral",
     "group": 5,
     "period": 6,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
     "HSAB": {
       "base_hardness": 7.1,
       "effective_hardness": 7.2,
@@ -667,7 +668,7 @@
     "preferred_geometry": "octahedral",
     "group": 6,
     "period": 6,
-
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 6.7,
       "effective_hardness": 6.5,
@@ -696,7 +697,7 @@
     "preferred_geometry": "octahedral",
     "group": 7,
     "period": 6,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6,7],
     "HSAB": {
       "base_hardness": 6.4,
       "effective_hardness": 6.1,
@@ -725,7 +726,7 @@
     "preferred_geometry": "octahedral",
     "group": 8,
     "period": 6,
-
+    "possible_ox_state": [-4,-2,0,1,2,3,4,5,6,7,8],
     "HSAB": {
       "base_hardness": 6.1,
       "effective_hardness": 5.7,
@@ -754,7 +755,7 @@
     "preferred_geometry": "octahedral",
     "group": 9,
     "period": 6,
-
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6,7,8,9],
     "HSAB": {
       "base_hardness": 5.7,
       "effective_hardness": 5.2,
@@ -784,7 +785,7 @@
     "preferred_geometry": "square_planar",
     "group": 10,
     "period": 6,
-
+    "possible_ox_state": [-1,-2,-3,0,1,2,3,4,5,6],
     "HSAB": {
       "base_hardness": 4.6,
       "effective_hardness": 4.0,
@@ -815,7 +816,7 @@
     "preferred_geometry": "linear",
     "group": 11,
     "period": 6,
-
+    "possible_ox_state": [-3,-2,-1,0,1,2,3,5],
     "HSAB": {
       "base_hardness": 4.2,
       "effective_hardness": 3.8,
@@ -845,7 +846,7 @@
     "preferred_geometry": "linear",
     "group": 12,
     "period": 6,
-
+    "possible_ox_state": [-2,0,1,2],
     "HSAB": {
       "base_hardness": 5.5,
       "effective_hardness": 5.2,
