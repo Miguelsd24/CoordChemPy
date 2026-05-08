@@ -1,0 +1,323 @@
+{
+  "PF6": {
+    "name": "hexafluorophosphate",
+    "Smiles": "[P-](F)(F)(F)(F)(F)F",
+    "formula": "PF6-",
+    "charge": -1
+  },
+
+  "BF4": {
+    "name": "tetrafluoroborate",
+    "Smiles": "[B-](F)(F)(F)F",
+    "formula": "BF4-",
+    "charge": -1
+  },
+
+  "ClO4": {
+    "name": "perchlorate",
+    "Smiles": "[O-]Cl(=O)(=O)=O",
+    "formula": "ClO4-",
+    "charge": -1
+  },
+
+  "CF3SO3": {
+    "name": "triflate",
+    "Smiles": "FC(F)(F)S(=O)(=O)[O-]",
+    "formula": "CF3SO3-",
+    "charge": -1
+  },
+
+  "NO3": {
+    "name": "nitrate",
+    "Smiles": "[O-]N(=O)=O",
+    "formula": "NO3-",
+    "charge": -1
+  },
+
+  "Cl": {
+    "name": "chloride",
+    "Smiles": "[Cl-]",
+    "formula": "Cl-",
+    "charge": -1
+  },
+
+  "Br": {
+    "name": "bromide",
+    "Smiles": "[Br-]",
+    "formula": "Br-",
+    "charge": -1
+  },
+
+  "I": {
+    "name": "iodide",
+    "Smiles": "[I-]",
+    "formula": "I-",
+    "charge": -1
+  },
+
+  "OH": {
+    "name": "hydroxide",
+    "Smiles": "[OH-]",
+    "formula": "OH-",
+    "charge": -1
+  },
+
+  "CN": {
+    "name": "cyanide",
+    "Smiles": "[C-]#N",
+    "formula": "CN-",
+    "charge": -1
+  },
+
+  "SCN": {
+    "name": "thiocyanate",
+    "Smiles": "[S-]C#N",
+    "formula": "SCN-",
+    "charge": -1
+  },
+
+  "N3": {
+    "name": "azide",
+    "Smiles": "[N-]=[N+]=[N-]",
+    "formula": "N3-",
+    "charge": -1
+  },
+
+  "AcO": {
+    "name": "acetate",
+    "Smiles": "CC(=O)[O-]",
+    "formula": "CH3COO-",
+    "charge": -1
+  },
+
+  "SO4": {
+    "name": "sulfate",
+    "Smiles": "[O-]S(=O)(=O)[O-]",
+    "formula": "SO4^2-",
+    "charge": -2
+  },
+
+  "CO3": {
+    "name": "carbonate",
+    "Smiles": "[O-]C(=O)[O-]",
+    "formula": "CO3^2-",
+    "charge": -2
+  },
+
+  "CrO4": {
+    "name": "chromate",
+    "Smiles": "[O-]Cr(=O)(=O)[O-]",
+    "formula": "CrO4^2-",
+    "charge": -2
+  },
+
+  "Cr2O7": {
+    "name": "dichromate",
+    "Smiles": "[O-]Cr(=O)(=O)OCr(=O)(=O)[O-]",
+    "formula": "Cr2O7^2-",
+    "charge": -2
+  },
+
+  "C2O4": {
+    "name": "oxalate",
+    "Smiles": "[O-]C(=O)C(=O)[O-]",
+    "formula": "C2O4^2-",
+    "charge": -2
+  },
+
+  "S2O3": {
+    "name": "thiosulfate",
+    "Smiles": "[O-]S(=O)(=S)[O-]",
+    "formula": "S2O3^2-",
+    "charge": -2
+  },
+
+  "PO4": {
+    "name": "phosphate",
+    "Smiles": "[O-]P(=O)([O-])[O-]",
+    "formula": "PO4^3-",
+    "charge": -3
+  },
+
+  "AsO4": {
+    "name": "arsenate",
+    "Smiles": "[O-]As(=O)([O-])[O-]",
+    "formula": "AsO4^3-",
+    "charge": -3
+  },
+
+  "BO3": {
+    "name": "borate",
+    "Smiles": "[O-]B([O-])[O-]",
+    "formula": "BO3^3-",
+    "charge": -3
+  },
+
+  "Na": {
+    "name": "sodium",
+    "Smiles": "[Na+]",
+    "formula": "Na+",
+    "charge": 1
+  },
+
+  "K": {
+    "name": "potassium",
+    "Smiles": "[K+]",
+    "formula": "K+",
+    "charge": 1
+  },
+
+  "Li": {
+    "name": "lithium",
+    "Smiles": "[Li+]",
+    "formula": "Li+",
+    "charge": 1
+  },
+
+  "Cs": {
+    "name": "caesium",
+    "Smiles": "[Cs+]",
+    "formula": "Cs+",
+    "charge": 1
+  },
+
+  "Rb": {
+    "name": "rubidium",
+    "Smiles": "[Rb+]",
+    "formula": "Rb+",
+    "charge": 1
+  },
+
+  "NH4": {
+    "name": "ammonium",
+    "Smiles": "[NH4+]",
+    "formula": "NH4+",
+    "charge": 1
+  },
+
+  "Ag": {
+    "name": "silver",
+    "Smiles": "[Ag+]",
+    "formula": "Ag+",
+    "charge": 1
+  },
+
+  "Tl": {
+    "name": "thallium(I)",
+    "Smiles": "[Tl+]",
+    "formula": "Tl+",
+    "charge": 1
+  },
+
+  "Mg": {
+    "name": "magnesium",
+    "Smiles": "[Mg+2]",
+    "formula": "Mg^+2",
+    "charge": 2
+  },
+
+  "Ca": {
+    "name": "calcium",
+    "Smiles": "[Ca+2]",
+    "formula": "Ca^+2",
+    "charge": 2
+  },
+
+  "Sr": {
+    "name": "strontium",
+    "Smiles": "[Sr+2]",
+    "formula": "Sr^+2",
+    "charge": 2
+  },
+
+  "Ba": {
+    "name": "barium",
+    "Smiles": "[Ba+2]",
+    "formula": "Ba^+2",
+    "charge": 2
+  },
+
+  "Zn": {
+    "name": "zinc",
+    "Smiles": "[Zn+2]",
+    "formula": "Zn^+2",
+    "charge": 2
+  },
+
+  "Cd": {
+    "name": "cadmium",
+    "Smiles": "[Cd+2]",
+    "formula": "Cd^+2",
+    "charge": 2
+  },
+
+  "Hg": {
+    "name": "mercury(II)",
+    "Smiles": "[Hg+2]",
+    "formula": "Hg^+2",
+    "charge": 2
+  },
+
+  "Cu": {
+    "name": "copper(II)",
+    "Smiles": "[Cu+2]",
+    "formula": "Cu^+2",
+    "charge": 2
+  },
+
+  "Ni": {
+    "name": "nickel(II)",
+    "Smiles": "[Ni+2]",
+    "formula": "Ni^+2",
+    "charge": 2
+  },
+
+  "Co": {
+    "name": "cobalt(II)",
+    "Smiles": "[Co+2]",
+    "formula": "Co^+2",
+    "charge": 2
+  },
+
+  "Fe2": {
+    "name": "iron(II)",
+    "Smiles": "[Fe+2]",
+    "formula": "Fe^+2",
+    "charge": 2
+  },
+
+  "Fe3": {
+    "name": "iron(III)",
+    "Smiles": "[Fe+3]",
+    "formula": "Fe^+3",
+    "charge": 3
+  },
+
+  "Al": {
+    "name": "aluminium",
+    "Smiles": "[Al+3]",
+    "formula": "Al^+3",
+    "charge": 3
+  },
+
+  "La": {
+    "name": "lanthanum",
+    "Smiles": "[La+3]",
+    "formula": "La^+3",
+    "charge": 3
+  },
+
+  "Ce": {
+    "name": "cerium(III)",
+    "Smiles": "[Ce+3]",
+    "formula": "Ce^+3",
+    "charge": 3
+  },
+
+  "Y": {
+    "name": "yttrium",
+    "Smiles": "[Y+3]",
+    "formula": "Y^+3",
+    "charge": 3
+  }
+}

@@ -2,28 +2,24 @@
 # IMPORTS
 # ==========================================
 
+import io
 import json
 import re
 import string
 from pathlib import Path
 
 import numpy as np
+import py3Dmol
 import roman
 from ase import Atoms
+from ase.io import write
 from IPython.display import Markdown, display
 
 # ==========================================
-# JUPYTER ERROR HANDLER
+# LOADING DATA (JSON)
 # ==========================================
 
-
-# ???
-
-
-# ==========================================
-# LOADING DATA
-# ==========================================
-
+# Importing the ligands and metals data from the json files
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 with open(BASE_DIR / "data" / "metals.json") as f:
@@ -32,13 +28,15 @@ with open(BASE_DIR / "data" / "metals.json") as f:
 with open(BASE_DIR / "data" / "ligands.json") as f:
     data_ligands = json.load(f)
 
+with open(BASE_DIR / "data" / "counter_ions.json") as f:
+    data_counter_ions = json.load(f)
 
 # ==========================================
 # GENERAL FUNCTIONS HELPING THE VERIF AND PARSING
 # ==========================================
 
 
-# === Function which returns a ligand if its in the database by name or abbr  === #
+# === Function which returns a ligand if its in the database by formula or abbr  === #
 def find_ligand(ligand_input):
     # We perform a direct verification
     if ligand_input in data_ligands:
@@ -50,10 +48,26 @@ def find_ligand(ligand_input):
     return False
 
 
+# === Function which returns a counter ion if its in the database by formula  === #
+def find_counter_ion(ion_input):
+    # We perform a direct verification
+    if ion_input in data_counter_ions:
+        return ion_input
+    # If not found, we perform a search by formula with charge
+    for ion_key, properties in data_counter_ions.items():
+        if "formula" in properties and properties["formula"] == ion_input:
+            return ion_key
+    # If not found, we perform a search by abbr
+    for ion_key, properties in data_counter_ions.items():
+        if "abbr" in properties and properties["abbr"] == ion_input:
+            return ion_key
+    return False
+
+
 # === Function which transforms a charge string (i.e. "+, -, X+, +X, -X, X-") to a negative or positive int === #
 def transform_charge(charge):
     # Case with nothing
-    if charge is None:
+    if charge is None or charge == "":
         return 0
     charge = charge.strip()
 
@@ -83,62 +97,90 @@ def transform_charge(charge):
         value = int(match.group(2))
         return value if sign == "+" else -value
 
-    raise ValueError(
-        f"Error: Invalid format charge for the coordination sphere: {charge}"
-    )
+    raise ValueError(f"Error: Invalid format charge: {charge}")
 
 
 # ==========================================
 # FORMAT VERIFICATION AND PARSING SECTION
 # ==========================================
 
-formula = "[Fe2(CN)4(m-H2O)2(en)2]2-"
 
-
-# === We use a function to verify the format of the formula === #
-def formula_format_verification(formula):
+# === We use a function to verify the format of the coordination sphere formula and begin the first step of the parsing (seperate metal/ligands/sphere charge) === #
+def formula_verif_and_parsing(formula):
     # We verify that the formula is a string
     if not isinstance(formula, str):
-        raise ValueError("Error: Formula must be a string")
+        raise ValueError("Error: Formula (coordination sphere) must be a string")
     # We discard spaces and verify that the formula is not empty
     clean_formula = formula.replace(" ", "")
     if clean_formula == "" or clean_formula == "[]":
-        raise ValueError("Error: Formula cannot be empty")
+        raise ValueError("Error: Formula (coordination sphere) cannot be empty")
     # We verify that the formula has the appropriate format with re.match()
     match = re.match(
-        r"\[([sdt]?)([A-Z][a-z]?)(0|[1-9]\d*)?(\((.+)\)(0|[1-9]\d*))*\]([0-9+-]+)?$",
+        r"\[([sdt])?([A-Z][a-z]?)([1-9]\d*)?(\((?:.+)\)(?:[1-9]\d*))*\]([0-9+-]+)?$",
         clean_formula,
     )
     if not match:
-        raise ValueError("Error: Invalid formula format")
+        raise ValueError(
+            "Error: Invalid formula format, see coordination sphere input format rules in the README.md file."
+        )
     # We return the match object for later use in the parsing functions
     return match
 
 
-# === We use a function to process the formula and return a clean LaTeX formula === #
-def get_clean_formula(formula):
-    # We replace the m- by μ- for a better display in LaTeX
-    clean_bridging = re.sub(r"m-", r"μ-", formula)
-    # We isolate the part of the formula with the metal and its coefficient to put the subscript in LaTeX
-    end = clean_bridging.find("]")
-    clean_sphere = re.sub(r"(\d+)", r"_{\1}", clean_bridging[: end + 1])
-    # We isolate the charge part to put it in superscript in LaTeX and we add the sign if the charge is positive
-    signe = ""
-    if complexe_charge(formula) > 0:
-        signe = "+"
-    elif complexe_charge(formula) == 0:
-        return (
-            "$" + clean_sphere + "$"
-        )  # If the charge is 0 we don't put anything in superscript
-    # If there is a charge, we put the charge in superscript with the appropriate sign
-    clean_subscript = "^{" + signe + str(complexe_charge(formula)) + "}"
-    return "$" + clean_sphere + clean_subscript + "$"
+# === We use a function to verify the format of the counter ion/s formula === #
+def counter_ions_verif(formula_counter_ions):
+    # We verify that the formula is a string
+    if not isinstance(formula_counter_ions, str):
+        raise ValueError("Error: Formula (counter ions) must be a string")
+    # We discard spaces and verify that the formula is not empty
+    clean_formula = formula_counter_ions.replace(" ", "")
+    if clean_formula == "" or clean_formula == "()":
+        raise ValueError("Error: Formula (counter ions) cannot be empty")
+    # We verify that the formula has the appropriate format with re.match()
+    verif = re.match(
+        r"(\((.*?)\)([1-9]\d*))*",
+        clean_formula,
+    )
+    if not verif:
+        raise ValueError(
+            "Error: Invalid formula format, see counter ions input format rules in the README.md file."
+        )
+    return clean_formula
+
+
+# === We use a function to parse counter ion/s formula === #
+def counter_ions_parsing(formula_counter_ions):
+    clean_formula = counter_ions_verif(formula_counter_ions)
+    match = re.findall(r"\((.*?)\)(\d*)", clean_formula)
+    # For each counter ion, we isolate it and its stoechiometric coefficient
+    ions_coeff_list = []
+    ions_list = []
+    coeffs_list = []
+    for counter_ion, coeff in match:
+        coeff = int(coeff) if coeff != "" else 1
+        # We put a limit of 12 identical counter ions
+        if coeff > 12:
+            raise ValueError(
+                "Error: No counter ion can have a coefficient superior to 12"
+            )
+        # We verify if the counter ion is in the database and treat the output if not
+        if find_counter_ion(counter_ion) is False:
+            raise ValueError(
+                f"Error: Counter ion of formula: {counter_ion} is not in the database."
+            )
+        else:
+            # We return a list with each counter ion times its coefficient, a list with only each counter ion one time and a list with the coefficient
+            # this will be usefull in others functions
+            ions_coeff_list.extend([counter_ion] * coeff)
+            ions_list.extend([counter_ion])
+            coeffs_list.append(coeff)
+    return ions_coeff_list, ions_list, coeffs_list
 
 
 # === We use a function to extract the metal/s and its stoechiometric coefficient from a given formula. It also verifies if the metal is in the json database === #
 def parse_metal(formula):
     # We import the match result from the formula format verification function to avoid doing it twice
-    match = formula_format_verification(formula)
+    match = formula_verif_and_parsing(formula)
     metal = match.group(2)
     if match.group(3) is None:
         coeff = 1
@@ -159,7 +201,7 @@ def parse_metal(formula):
 # ===  Function which extracts form the formula if the metals are bonded (single, double ,triple) or not === #
 def bond_order(formula):
     # We import the match result from the formula format verification function to avoid doing it twice
-    match = formula_format_verification(formula)
+    match = formula_verif_and_parsing(formula)
     # We stock a dico to link the letter to a number of metal-metal bond
     order_dico = {"s": 1, "d": 2, "t": 3}
     # We extract the letter accordint to the metal coefficient value (if no coeff, cooef = 1)
@@ -179,7 +221,7 @@ def bond_order(formula):
 # ===  Function which extract a list of the ligand/s from a given raw formula. It also verifies if the ligand/s is/are in the json database === #
 def parse_ligands(formula):
     # We import the match result from the formula format verification function to avoid doing it twice
-    match = formula_format_verification(formula)
+    match = formula_verif_and_parsing(formula)
     ligands_str = match.group(4)
     # We use re.findall to extract the ligands and their stoechiometric coefficient from the match.group(4) result
     match = re.findall(r"\((.*?)\)(\d*)", ligands_str)
@@ -234,9 +276,6 @@ def parse_elements(formula):
     elements = []
     elements.extend(ligands_list(formula))
     elements.extend(parse_metal(formula))
-    # We also verify that there is no bridging ligand if there is only one metal center
-    if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
-        raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
     return elements
 
 
@@ -245,10 +284,31 @@ def parse_elements(formula):
 # ==========================================
 
 
+def counter_ions_charge(formula_counter_ions):
+    counter_ions = counter_ions_parsing(formula_counter_ions)[0]
+    charge = 0
+    for counter_ion in counter_ions:
+        charge += data_counter_ions[counter_ion]["charge"]
+    return charge
+
+
 # === Function which return the charge of the coordination sphere as an int === #
-def complexe_charge(formula):
-    match = formula_format_verification(formula)
-    return transform_charge(match.group(7)) if match.group(7) else 0
+def complexe_charge(formula, formula_counter_ions=None):
+    match = formula_verif_and_parsing(formula)
+    charge = transform_charge(match.group(5))
+    if formula_counter_ions is None:
+        return charge if charge else 0
+    else:
+        if charge != 0 and -charge != counter_ions_charge(formula_counter_ions):
+            raise ValueError(
+                "Error: Counter ions total charge doesn't match the charge in the coordination sphere formula"
+            )
+        if counter_ions_charge(formula_counter_ions) == 0:
+            raise ValueError(
+                "Error: The counter ions cannot have a neutral total charge"
+            )
+        else:
+            return -counter_ions_charge(formula_counter_ions)
 
 
 # === Function which calulate the sum of all ligands' charges === #
@@ -265,10 +325,10 @@ def ligands_charge(formula):
 
 
 # === Function which calulate the charge of the metal center (i.e. MX+ or MX-) === #
-def metal_charge(formula):
-    charge = (complexe_charge(formula) - ligands_charge(formula)) // len(
-        parse_metal(formula)
-    )
+def metal_charge(formula, formula_counter_ions=None):
+    charge = (
+        complexe_charge(formula, formula_counter_ions) - ligands_charge(formula)
+    ) // len(parse_metal(formula))
     return charge
 
 
@@ -353,8 +413,8 @@ def electronic_structure(formula):
 # NAMING COORDINATION COMPOUNDS SECTION
 # ==========================================
 
-# We first set two sets of useful prefixes for the nomenclature of compounds.
-# first one is used in general but the second one is used for some specific ligands (see IUPAC rules)
+# === We first set two sets of useful prefixes for the nomenclature of compounds,
+# the first one is used in general but the second one is used for some specific ligands (see IUPAC rules) === #
 
 coeff_name1 = {
     1: "",
@@ -423,8 +483,26 @@ def should_use_the_coeff_name2(ligand_name):
     return False
 
 
+def naming_counter_ions(formula_counter_ions):
+    if formula_counter_ions is None:
+        return ""
+    counter_ions_list = counter_ions_parsing(formula_counter_ions)
+    ions = counter_ions_list[1]
+    ions_with_coeffs = []
+    # We first sort the ligands in alphabetic order and keep their respective coefficients by putting them in a list of tuple (ligand(sorted), coeff)
+    for n in range(len(ions)):
+        ion_name = data_counter_ions[ions[n]]["name"]
+        ions_with_coeffs.append(ion_name)
+    ions_with_coeffs.sort(key=lambda x: x.lower())
+
+    counter_ions_naming = ""
+    for ions in ions_with_coeffs:
+        counter_ions_naming += ions + " "
+    return counter_ions_naming
+
+
 # === Function which returns the IUPAC name of the input coordination compound === #
-def naming_compound(formula):
+def naming_compound(formula, formula_counter_ions=None):
     # We set the data nedded and empty list or string to stock the result
     parsed_data = parse_ligands(formula)
     ligands = parsed_data[0]
@@ -442,8 +520,10 @@ def naming_compound(formula):
     ligands_with_coeffs.sort(key=lambda x: x[0].lower())
 
     # We transform the metal as its name. We use the secondary name of the metal if the corrdination sphere is charged negatively
-    if complexe_charge(formula) < 0:
+    # Also, we start by adding the counter ions if the sphere charge is negative
+    if complexe_charge(formula, formula_counter_ions) < 0:
         metal_name = data_metals[metals[0]]["secondary_name"]
+        name = naming_counter_ions(formula_counter_ions)
     else:
         metal_name = data_metals[metals[0]]["name"]
 
@@ -500,7 +580,6 @@ def naming_compound(formula):
 
     # We add the metal name and already put the capital at the begining (avoid unwanted interactions between .capitalize and roman numbers later)
     name += metal_name
-    name = name.capitalize()
 
     # We add the charge according to preference selected in the site (roman/integer) !!not implemented yet, we use roman by default for the moment!!
 
@@ -522,7 +601,10 @@ def naming_compound(formula):
         name += ")"
     if name.startswith("-"):
         name = name[1:]
-
+    name = re.sub(r" -μ-", " μ-", name)
+    # We lastly add the counter ions if the sphere charge is positive
+    if complexe_charge(formula, formula_counter_ions) > 0:
+        name += " " + naming_counter_ions(formula_counter_ions)
     return name
 
 
@@ -568,12 +650,12 @@ def crystal_field_stabilization(formula):
     return (electrons - 6) * ligand_field_strength(formula)
 
 
-def stability_index(formula):
+def stability_index(formula, formula_counter_ions=None):
     """
     Score global de stabilité (0-100)
     """
     cfse = crystal_field_stabilization(formula)
-    charge = abs(complexe_charge(formula))
+    charge = abs(complexe_charge(formula, formula_counter_ions))
     lig_score = ligand_field_strength(formula)
 
     score = 50
@@ -642,12 +724,7 @@ def isomers(formula):
         letter = alphabet[n]
         key += letter + str(number[n])
 
-    if key == "Ma2b2" and find_geometry(formula, 1) == [
-        (1, 0, 0),
-        (-1, 0, 0),
-        (0, 1, 0),
-        (0, -1, 0),
-    ]:
+    if key == "Ma2b2" and find_geometry(formula)[1] == "square planar":
         return 2, 0
     else:
         stereo = stereoisomers_dico.get(key)
@@ -655,32 +732,79 @@ def isomers(formula):
         return stereo, enantio
 
 
-# =============================================================================================================================================================== #
+# ==========================================
+# COMPOUND ANALYSIS AND DISPLAY SECTION
+# ==========================================
+
+
+# === We use a function to process the formula and return a clean LaTeX formula === #
+def get_clean_formula(formula, formula_counter_ions=None):
+    clean_formula = formula.replace(" ", "")
+    # We replace the m- by μ- for a better display in LaTeX
+    clean_bridging = re.sub(r"m-", r"μ-", clean_formula)
+    # We isolate the part of the formula with the metal and its coefficient to put the subscript in LaTeX
+    end = clean_bridging.find("]")
+    clean_sphere = re.sub(r"(\d+)", r"_{\1}", clean_bridging[: end + 1])
+    clean_sphere = re.sub(r"\(([A-Z][a-z]?)\)", r"\1", clean_sphere)
+    # We isolate the counter ions part and subscript in LaTeX
+    if formula_counter_ions is None:
+        clean_counter_ions = ""
+    else:
+        clean_counter_ions = re.sub(r"(\d+)", r"_{\1}", formula_counter_ions)
+        clean_counter_ions = re.sub(r"\(([A-Z][a-z]?)\)", r"\1", clean_counter_ions)
+    # We isolate the charge part to put it in superscript in LaTeX and we add the sign if the charge is positive
+    charge = complexe_charge(formula, formula_counter_ions)
+    if charge > 0:
+        return (
+            "$"
+            + clean_sphere
+            + "^{"
+            + "+"
+            + str(charge)
+            + "}"
+            + clean_counter_ions
+            + "$"
+        )
+    elif charge == 0:
+        return "$" + clean_sphere + "$"
+    else:
+        return "$" + clean_counter_ions + clean_sphere + "^{" + str(charge) + "}" + "$"
+
+
+# === We use this function to verify that the compound follows the chemical rules
+# (This function regroups the cases which were not treated troughout the calculation, analysis, parsing ... functions) === #
+def chemical_rules(formula, formula_counter_ions=None):
+    # We verify that there is no bridging ligand if there is only one metal center
+    if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
+        raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
 
 
 # Final function which prints all the relevant information about the coordination compound
-def analyze_complexe(formula):
-    parse_elements(formula)
+def analyze_complexe(formula, formula_counter_ions=None):
+    # We first verify the chemical rules
+    chemical_rules(formula, formula_counter_ions)
     lines = []
 
     # Formula
-    lines.append(f"* **Formula** : {get_clean_formula(formula)}")
+    lines.append(f"* **Formula** : {get_clean_formula(formula, formula_counter_ions)}")
 
     # Nomenclature
-    name = naming_compound(formula)
+    name = naming_compound(formula, formula_counter_ions)
     lines.append(f"* **IUPAC Name** : {name}")
 
     # Metal charge
     metals = parse_metal(formula)
     charge = metal_charge(formula)
     charge_str = f"{charge}+" if charge > 0 else f"{charge}"
-    lines.append(f"* **Metal** : {metals[0]} ({charge_str})")
+    lines.append(f"* **Metal oxidation state** : {metals[0]} ({charge_str})")
 
     # Electronic structure
     e_list = electronic_structure(formula)
     lines.append(
         f"* **Electronic structure** : [{e_list[0]}] {e_list[1]}s{e_list[2]} {e_list[1] - 1}d{e_list[3]}"
     )
+
+    # Configuration haut spin / bas spin
 
     # Electrons counting
     count = electron_count(formula)
@@ -696,35 +820,31 @@ def analyze_complexe(formula):
             f"* **Isomers:** This compound has {isomers(formula)[0]} stereoisomers and {isomers(formula)[1]} enantiomeres pairs"
         )
 
-    # Remarks
-    remarks = oxidation_state(formula)[1]
-    if remarks is not None:
-        lines.append(f"* **Remarks:** {remarks}")
-
     # Stability (NEW)
     stability = stability_index(formula)
     lines.append(f"* **Stability index** : {stability}/100")
 
+    # Geometry
+
+    # Remarks (add according to electron rule)
+    remarks = oxidation_state(formula)[1]
+    if remarks is not None:
+        lines.append(f"* **Remarks:** {remarks}")
+
     return lines, "\n".join(lines)
 
 
-def show_analysis(formula):
-    return display(Markdown(analyze_complexe(formula)[1]))
+def show_analysis(formula, clean_counter_ions=None):
+    return display(Markdown(analyze_complexe(formula, clean_counter_ions)[1]))
 
 
-# =============================================================================================================================================================== #
-# =============================================================================================================================================================== #
-# =============================================================================================================================================================== #
-# 3D part of the code
-# =============================================================================================================================================================== #
-# =============================================================================================================================================================== #
-# =============================================================================================================================================================== #
+# ==========================================
+# COMPOUND 3D VISUALISATION SECTION
+# ==========================================
 
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# GEOMETRY ---- METAL - LIGAND -------------------------------
-# ------------------------------------------------------------
-# ------------------------------------------------------------
+# ==========================================
+# COMPOUND MAIN GEOMETRY CALCULATION SECTION
+# ==========================================
 
 
 def linear(r):
@@ -767,31 +887,29 @@ def square_planar(r):
     return array
 
 
-def find_geometry(formula, r):
+def find_geometry(formula, r=0):
     cn = len(ligands_list(formula))
     if cn == 1:
-        return [(r, 0, 0)]
+        return [(r, 0, 0)], "linear"
     elif cn == 2:
-        return linear(r)
+        return linear(r), "linear"
     elif cn == 3:
-        return trigonal_planar(r)
+        return trigonal_planar(r), "trigonal planar"
     elif cn == 4 and oxidation_state(formula)[0] == 8:
-        return square_planar(r)
+        return square_planar(r), "square planar"
     elif cn == 4 and not oxidation_state(formula)[0] == 8:
-        return tetrahedral(r)
+        return tetrahedral(r), "tetrahedral"
     elif cn == 5:
-        return trigonal_bipyramidal(r)
+        return trigonal_bipyramidal(r), "trigonal bipyramidal"
     elif cn == 6:
-        return octahedral(r)
+        return octahedral(r), "octahedral"
     else:
         raise ValueError("Error: The visualisation 3D does not work for CN over 6")
 
 
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# GEOMETRY INTERNE ---- LIGANDS -----------------------------
-# ------------------------------------------------------------
-# ------------------------------------------------------------
+# ==========================================
+# LIGANDS GEOMETRY CALCULATION SECTION
+# ==========================================
 
 
 def ligand_linear(ligand, ligand_coord, r):
@@ -871,27 +989,21 @@ def ligand_tetrahedral(ligand, ligand_coord, r):
 
 def get_geometry_ligand(ligand_input):
     geometry = data_ligands[ligand_input].get("geometry")
-    if geometry != None:
+    if geometry is not None:
         return geometry
     return False
 
 
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# -------- 3D visualisation and coumpound creation -----------
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# ------------------------------------------------------------
+# ==========================================
+# COMPOUND 3D RENDERING SECTION
+# ==========================================
 
 
-def atoms_position_and_bond(formula):
-    r = 1.7
+def atoms_position_and_bond(formula, r=1.7):
     bonding = []
     nb_of_atoms = 0
     position = [(0, 0, 0)]
-    big_array = find_geometry(formula, r)
+    big_array = find_geometry(formula, r)[0]
     ligand_list = ligands_list(formula)
     for i, ligand in enumerate(ligand_list):
         if get_geometry_ligand(ligand) == "sphere":
@@ -956,6 +1068,34 @@ def create_compound_render(formula):
         atom_symbols(formula), positions=atoms_position_and_bond(formula)[0]
     )
     return compound
+
+
+def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Stick"):
+    # Conversion ASE atoms -> XYZ string
+    xyz_str = io.StringIO()
+    write(xyz_str, compound, format="xyz")
+    xyz_content = xyz_str.getvalue()
+
+    # Initialisation de la vue
+    view = py3Dmol.view(width=400, height=400)
+    view.addModel(xyz_content, "xyz")
+
+    # Application des styles
+    if render_type == "Ball and Stick":
+        view.setStyle({"stick": {}, "sphere": {"scale": atoms_size}})
+    elif render_type == "Stick":
+        view.setStyle({"stick": {}})
+    elif render_type == "Sphere":
+        view.setStyle({"sphere": {"scale": atoms_size}})
+    elif render_type == "Lines":
+        view.setStyle({"line": {}})
+    elif render_type == "VDW":
+        view.addSurface(py3Dmol.VDW)
+
+    view.zoomTo()
+
+    # La méthode .show() est l'équivalent optimisé pour Notebook
+    return view.show()
 
 
 """
