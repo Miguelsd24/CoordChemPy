@@ -578,7 +578,7 @@ def naming_compound(formula, formula_counter_ions=None):
                 prefixe_ligand = coeff_name1[coeff / n]
                 name += prefixe_ligand + ligand_name
 
-    # We add the metal name and already put the capital at the begining (avoid unwanted interactions between .capitalize and roman numbers later)
+    # We add the metal name
     name += metal_name
 
     # We add the charge according to preference selected in the site (roman/integer) !!not implemented yet, we use roman by default for the moment!!
@@ -602,9 +602,12 @@ def naming_compound(formula, formula_counter_ions=None):
     if name.startswith("-"):
         name = name[1:]
     name = re.sub(r" -μ-", " μ-", name)
-    # We lastly add the counter ions if the sphere charge is positive
+    # We lastly add the counter ions, at the end of the formul, if the sphere charge is positive
     if complexe_charge(formula, formula_counter_ions) > 0:
         name += " " + naming_counter_ions(formula_counter_ions)
+    name = (
+        name[:1].capitalize() + name[1:]
+    )  # We avoid the .capitalize to interact with the roman number
     return name
 
 
@@ -825,6 +828,8 @@ def analyze_complexe(formula, formula_counter_ions=None):
     lines.append(f"* **Stability index** : {stability}/100")
 
     # Geometry
+    geometry = find_geometry(formula)[1].capitalize()
+    lines.append(f"* **Probable geometry** : {geometry}")
 
     # Remarks (add according to electron rule)
     remarks = oxidation_state(formula)[1]
