@@ -1,145 +1,323 @@
-import re
-import sys
-from pathlib import Path
+# ==========================================
+# 🧪 STABILITY ENGINE
+# ==========================================
 
-# --- CONFIGURATION ---
-BASE_PATH = Path(__file__).resolve().parent
-if str(BASE_PATH) not in sys.path:
-    sys.path.insert(0, str(BASE_PATH))
+import math
+from dataclasses import dataclass
 
 try:
-    from coordchem import (
+    from src.coordchem import (
+        ligands_list,
+        parse_metal,
+        electron_count,
+        metal_charge,
+        oxidation_state,
         data_ligands,
         data_metals,
-        electron_count,
-        ligands_list,
-        metal_charge,
-        parse_metal,
     )
-except ImportError:
-    print("❌ Erreur : coordchem.py introuvable.")
-    sys.exit(1)
+except:
+    from coordchem import (
+        ligands_list,
+        parse_metal,
+        electron_count,
+        metal_charge,
+        oxidation_state,
+        data_ligands,
+        data_metals,
+    )
 
 
-class ComplexStabilityAnalyzer:
+# ==========================================
+# 📦 RESULT
+# ==========================================
+
+@dataclass
+class StabilityResult:
+    total: float
+    electron: float
+    hsab: float
+    chelate: float
+    field: float
+    charge: float
+    geometry: float
+    oxidation: float
+    backbonding: float
+    steric: float
+
+
+# ==========================================
+# 🔧 NORMALIZATION
+# ==========================================
+
+def normalize(f):
+    return f.replace(" ", "")
+
+
+# ==========================================
+# 🧪 ENGINE
+# ==========================================
+
+class StabilityEngine:
+
     def __init__(self, formula):
-        self.formula = formula
-        # Extraction brute du métal pour forcer la reconnaissance
-        match_metal = re.search(r"\[([A-Z][a-z]?)", formula)
-        self.m_sym = match_metal.group(1) if match_metal else "Fe"
 
-        try:
-            self.ox_state = metal_charge(formula)
-            # Sécurité pour le compte d'électrons
-            self.e_count = electron_count(formula)
-        except:
-            self.ox_state, self.e_count = 0, 0
+        self.formula = normalize(formula)
 
-        # Scanner de ligands
-        f_up = formula.upper()
-        if "EDTA" in f_up:
-            self.ligands = ["C10H16N2O8"]
-        elif "EN3" in f_up:
-            self.ligands = ["en"] * 3
-        elif "EN2" in f_up:
-            self.ligands = ["en"] * 2
-        elif "CN6" in f_up:
-            self.ligands = ["CN"] * 6
-        elif "PPH3)3" in f_up:
-            self.ligands = ["PPh3"] * 3 + ["Cl"]
-        else:
-            try:
-                raw = ligands_list(formula)
-                self.ligands = [l[2:] if l.startswith("m-") else l for l in raw]
-            except:
-                self.ligands = []
+        metals = parse_metal(self.formula)
+        if not metals:
+            raise ValueError("No metal found")
 
-        m_info = data_metals.get(self.m_sym, {})
-        self.s_data = m_info.get("oxidation_states", {}).get(f"{self.ox_state}+", {})
+        self.metal = metals[0]
+        self.ligands = ligands_list(self.formula)
 
-    def analyze(self):
-        # 1. CIBLE ÉLECTRONIQUE (16e pour Rh, Pd, Pt, Ir)
-        square_planar_metals = ["Rh", "Pd", "Pt", "Ir", "Au"]
-        target = 16 if self.m_sym in square_planar_metals else 18
+        self.cn = len(self.ligands)
+        self.electrons = electron_count(self.formula)
 
-        # On ajuste le compte d'électrons manuellement si Wilkinson est mal lu
-        current_e = self.e_count
-        if "Rh" in self.m_sym and "PPh3" in self.formula:
-            current_e = 16
+        self.charge = metal_charge(self.formula)
+        self.ox, _ = oxidation_state(self.formula)
 
-        if any(x in self.formula for x in ["MnO4", "CrO4", "VO4"]):
-            s_elec = 100.0
-        else:
-            gap = abs(target - current_e)
-            # Courbe de décroissance plus réaliste (0.88 au lieu de 0.85)
-            s_elec = 100 * (0.88**gap)
+        self.m_data = data_metals.get(self.metal, {
+            "hardness": 5,
+            "group": 10
+        })
 
-        # 2. HSAB (Match de dureté)
-        m_h = self.s_data.get("effective_hardness", 6.0)
-        if self.ox_state >= 3:
-            m_h += 1.5
+        self.series_bonus = self._series_bonus()
 
-        aff_scores = []
-        for l in self.ligands:
-            ld = data_ligands.get(l, {})
-            lh = ld.get("HSAB", {}).get("hardness", 5.0)
-            fv = ld.get("field_strength", {}).get("value", 5.0)
-            # Sensibilité à 15 (juste milieu entre 10 et 18)
-            match = max(0, 100 - (abs(m_h - lh) * 15))
-            aff_scores.append(match * (fv / 5.0))
-        s_hsab = sum(aff_scores) / len(aff_scores) if aff_scores else 50.0
 
-        # 3. CHÉLATE
-        total_dent = sum(
-            [data_ligands.get(l, {}).get("denticity", 1) for l in self.ligands]
+    # ==========================================
+    # 🔥 SERIES BONUS
+    # ==========================================
+
+    def _series_bonus(self):
+
+        d5 = {"Pd", "Ag", "Cd", "Pt", "Au", "Hg"}
+        d4 = {"Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh"}
+
+        if self.metal in d5:
+            return 10
+        if self.metal in d4:
+            return 5
+        return 0
+
+
+    # ==========================================
+    # ⚡ ELECTRON COUNT (18e rule improved)
+    # ==========================================
+
+    def electron_score(self):
+
+        # distinction CO / CN / phosphines
+        strong_field = 18
+        moderate_field = 16
+
+        cn_boost_metal = {"Ni", "Pd", "Pt"}
+
+        target = strong_field if self.metal in cn_boost_metal else moderate_field
+
+        gap = abs(self.electrons - target)
+
+        score = 100 - (gap * 10)
+
+        # bonus Ni(CO)4 / Pt(CO) etc
+        if "CO" in self.formula:
+            score += 8
+
+        return max(0, min(100, score + self.series_bonus))
+
+
+    # ==========================================
+    # 🧲 HSAB (more contrast)
+    # ==========================================
+
+    def hsab_score(self):
+
+        m_h = self.m_data.get("hardness", 5)
+
+        scores = []
+
+        for lig in self.ligands:
+
+            lig = lig.replace("m-", "")
+            l = data_ligands.get(lig, {})
+
+            l_h = l.get("HSAB", {}).get("hardness", 5)
+            field = l.get("field", 1)
+
+            # stronger penalty for mismatch
+            match = math.exp(-0.45 * abs(m_h - l_h))
+
+            scores.append(match * (1 + field / 4))
+
+        return sum(scores) / len(scores) * 100 if scores else 50
+
+
+    # ==========================================
+    # 🧷 CHELATION (IMPORTANT FIX)
+    # ==========================================
+
+    def chelate_score(self):
+
+        dent = 0
+
+        for lig in self.ligands:
+
+            lig = lig.replace("m-", "")
+            dent += data_ligands.get(lig, {}).get("denticity", 1)
+
+        # real chelate effect boost
+        bonus = (dent - self.cn)
+
+        # stronger exponential reward
+        return max(0, min(100, 60 + bonus * 25))
+
+
+    # ==========================================
+    # ⚛️ FIELD (NORMALIZED BY CN)
+    # ==========================================
+
+    def field_score(self):
+
+        score = 0
+
+        for lig in self.ligands:
+
+            lig = lig.replace("m-", "")
+            score += data_ligands.get(lig, {}).get("field", 1)
+
+        # CN normalization (CRUCIAL FIX)
+        normalized = score / max(1, self.cn)
+
+        return min(100, normalized * 25)
+
+
+    # ==========================================
+    # ⚖️ CHARGE
+    # ==========================================
+
+    def charge_score(self):
+
+        return max(0, 100 - abs(self.charge) * 8)
+
+
+    # ==========================================
+    # 🧬 GEOMETRY (d8 FIXED)
+    # ==========================================
+
+    def geometry_score(self):
+
+        cn = self.cn
+
+        if cn == 6:
+            return 95
+
+        if cn == 4:
+
+            # REAL FIX: d8 square planar dominance
+            if self.metal in {"Ni", "Pd", "Pt"}:
+                return 98  # IMPORTANT BOOST
+            return 80
+
+        if cn == 5:
+            return 78
+
+        if cn == 2:
+            return 85
+
+        return 60
+
+
+    # ==========================================
+    # 🔥 OXIDATION
+    # ==========================================
+
+    def oxidation_score(self):
+
+        preferred = data_metals.get(self.metal, {}).get(
+            "possible_ox_state",
+            [self.ox]
         )
-        c_count = max(0, total_dent - len(self.ligands))
-        s_chelate = min(100, c_count * 25)
 
-        # 4. FINAL
-        raw = (s_elec * 0.35) + (s_hsab * 0.30) + (s_chelate * 0.35)
-        final = max(0, min(100, round(raw, 1)))
+        diff = min(abs(self.ox - p) for p in preferred)
 
-        diag = (
-            "TRÈS STABLE"
-            if final > 82
-            else "STABLE"
-            if final > 60
-            else "MÉTASTABLE"
-            if final > 40
-            else "INSTABLE"
-        )
+        return max(30, 100 - diff * 18)
 
-        return {
-            "score": final,
-            "diag": diag,
-            "elec": s_elec,
-            "hsab": s_hsab,
-            "chelate": s_chelate,
-            "target": target,
+
+    # ==========================================
+    # 🔗 BACKBONDING (CO vs CN FIX)
+    # ==========================================
+
+    def backbonding_score(self):
+
+        score = 0
+
+        for lig in self.ligands:
+
+            lig = lig.replace("m-", "")
+
+            info = data_ligands.get(lig, {})
+
+            if info.get("pi_acceptor"):
+                score += 35  # stronger separation
+
+            # CN stronger than CO in this model
+            if lig == "CN":
+                score += 10
+
+            if lig == "CO":
+                score += 15
+
+        return min(100, score + self.series_bonus)
+
+
+    # ==========================================
+    # 🧱 STERIC
+    # ==========================================
+
+    def steric_score(self):
+
+        bulk = 0
+
+        for lig in self.ligands:
+
+            lig = lig.replace("m-", "")
+            bulk += data_ligands.get(lig, {}).get("steric_bulk", 1)
+
+        return max(0, 100 - bulk * 3)
+
+
+    # ==========================================
+    # 🏆 FINAL SCORE (REBALANCED)
+    # ==========================================
+
+    def final_score(self):
+
+        parts = {
+            "electron": self.electron_score(),
+            "hsab": self.hsab_score(),
+            "chelate": self.chelate_score(),
+            "field": self.field_score(),
+            "charge": self.charge_score(),
+            "geometry": self.geometry_score(),
+            "oxidation": self.oxidation_score(),
+            "backbonding": self.backbonding_score(),
+            "steric": self.steric_score(),
         }
 
+        weights = {
+            "electron": 0.22,
+            "hsab": 0.17,
+            "chelate": 0.16,
+            "field": 0.12,
+            "charge": 0.08,
+            "geometry": 0.12,
+            "oxidation": 0.09,
+            "backbonding": 0.03,
+            "steric": 0.01,
+        }
 
-def print_result(f, n, r):
-    print("=" * 60)
-    print(f"🧪 SYSTEM ANALYSIS : {f} | {n}")
-    print("=" * 60)
-    print(f"🏆 STABILITY INDEX : {r['score']} / 100")
-    print(f"📊 DIAGNOSTIC      : {r['diag']}")
-    print("-" * 60)
-    print(f"  • Electronic (target {r['target']}e) : {r['elec']:.1f}/100")
-    print(f"  • Ligand Field & HSAB      : {r['hsab']:.1f}/100")
-    print(f"  • Chelate Bonus (Dent.)    : +{r['chelate']}")
-    print("=" * 60 + "\n")
+        total = sum(parts[k] * weights[k] for k in parts)
 
-
-if __name__ == "__main__":
-    tests = [
-        ("[Fe(CN)6]4-", "Ferrocyanure"),
-        ("[Fe(EDTA)]-", "Fer-EDTA"),
-        ("[RhCl(PPh3)3]", "Wilkinson Catalyst"),
-        ("[Co(en)3]3+", "Tris-en Cobalt"),
-    ]
-    for f, n in tests:
-        res = ComplexStabilityAnalyzer(f).analyze()
-        print_result(f, n, res)
+        return StabilityResult(
+            **parts,
+            total=round(max(0, min(100, total)), 2)
+        )
