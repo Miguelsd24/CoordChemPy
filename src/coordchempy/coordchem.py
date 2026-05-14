@@ -575,14 +575,14 @@ def naming_compound(formula, formula_counter_ions=None):
 
     # Before deviding the coefficients by 2 in case of a dinuclear complex, we verify that the compound is well symmetric (to avoid having a float as the coefficient)
     if len(metals) == 2:
-        for ligand_name, coeff in ligands_with_coeffs:
+        for _, coeff in ligands_with_coeffs:
             if coeff > 0 and coeff % 2 != 0:
                 raise ValueError(
                     "Error: The compound is not symmetric, the coefficients of the non-bridging ligands must all be even integers"
                 )
 
     # 3. TERMINAL LIGANDS
-    for i, (ligand_name, coeff) in enumerate(ligands_with_coeffs):
+    for ligand_name, coeff in ligands_with_coeffs:
         if coeff > 0:
             if should_use_the_coeff_name2(ligand_name) is True:
                 # We divide the coefficient by 1 or 2 to take into account the case of symmetric binuclear complexes
@@ -1065,7 +1065,6 @@ def analyze_complexe(formula, formula_counter_ions=None):
 
     if in_notebook:
         markdown_text = "\n".join(f"* {line}" for line in lines)
-
         return display(Markdown(markdown_text))
 
     # =====================================
@@ -1074,14 +1073,9 @@ def analyze_complexe(formula, formula_counter_ions=None):
 
     else:
         for line in lines:
+            line = re.sub(r"\*\*", "", line)
             print(line)
-
-        return lines
-
-
-# Final function which prints all the relevant information about the coordination compound
-def show_analysis(formula, clean_counter_ions=None):
-    return display(Markdown(analyze_complexe(formula, clean_counter_ions)[1]))
+        return "Analysis succesfull"
 
 
 # ==========================================
