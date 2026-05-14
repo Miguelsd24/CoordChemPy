@@ -1,12 +1,12 @@
 # ==========================================
 # IMPORTS
 # ==========================================
-
 import io
 import json
 import math
 import re
 import string
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -352,7 +352,7 @@ def oxidation_state(formula):
             + " according to the database."
         )
     else:
-        remark = None
+        remark = ""
     # We return an error if the oxidation state is too large or too small to rule very impossible compounds, thus the limit is +10 and -5
     # (We let +10,+9,+8... and some negative values because we'd like our program to compute even not possible compounds to let the user understand why they are not possible)
     if ox_state < 0 or ox_state > 12:
@@ -388,7 +388,7 @@ def electron_count(formula):
 # === Function which return if the complexs follows the 16 or 18 electron rule === #
 def electrons_probable_complex(formula):
     if electron_count(formula) == 16 or electron_count(formula) == 18:
-        return None
+        return ""
     elif electron_count(formula) > 22:
         return "This specific coordination complex is highly unstable and structurally unfeasible."
     else:
@@ -979,7 +979,7 @@ def chemical_rules(formula):
 
 
 # Final function which prints all the relevant information
-def analyze_complexe(formula, formula_counter_ions=None):
+def analyze_complex(formula, formula_counter_ions=None):
     # We first verify the chemical rules
     chemical_rules(formula)
 
@@ -1034,48 +1034,52 @@ def analyze_complexe(formula, formula_counter_ions=None):
     lines.append(f"**Stability index** : {result.total}/100")
 
     # Geometry
-    geometry = get_geometry(formula)[1].capitalize()
-    lines.append(f"**Probable geometry** : {geometry}")
+    if len(ligands_list(formula)) < 6:
+        geometry = get_geometry(formula)[1].capitalize()
+        lines.append(f"**Probable geometry** : {geometry}")
 
     # Remarks
     remark1 = oxidation_state(formula)[1]
     remark2 = electrons_probable_complex(formula)
 
-    if remark1 is not None or remark2 is not None:
+    if remark1 != "" or remark2 != "":
         lines.append(f"**Remarks:** {remark1} {remark2}")
+    return render_analysis(lines)
 
-    # =====================================
-    # Detect notebook
-    # =====================================
 
-    in_notebook = False
+# Change the render depending on the interface (Notebook, Streamlit, Terminal)
+def render_analysis(lines):
+    is_streamlit = False
+    is_notebook = False
 
+    # Check Streamlit
+    if "streamlit" in sys.modules:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+        if get_script_run_ctx() is not None:
+            is_streamlit = True
+
+    # Check Notebook
     try:
         shell = get_ipython().__class__.__name__
-
         if shell == "ZMQInteractiveShell":
-            in_notebook = True
-
-    except Exception:
+            is_notebook = True
+    except NameError:
         pass
 
-    # =====================================
-    # NOTEBOOK -> Markdown bullets
-    # =====================================
-
-    if in_notebook:
+    # Render depending on the interface
+    if is_notebook:
         markdown_text = "\n".join(f"* {line}" for line in lines)
         return display(Markdown(markdown_text))
 
-    # =====================================
-    # NORMAL PYTHON -> print clean lines
-    # =====================================
+    elif is_streamlit:
+        markdown_text = "\n\n".join(lines)
+        return markdown_text
 
     else:
-        for line in lines:
-            line = re.sub(r"\*\*", "", line)
-            print(line)
-        return "Analysis succesfull"
+        # Terminal (Standard .py)
+        text = "\n".join(lines).replace("**", "")
+        return text
 
 
 # ==========================================
@@ -1315,7 +1319,7 @@ def create_compound_render(formula):
 
 
 # Function which convertes the ASE to a render. It optimises the render for a Notebook
-def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Stick"):
+def render_complex(compound, atoms_size=0.4, render_type="Ball and Stick"):
     # ASE atoms -> XYZ string
     xyz_str = io.StringIO()
     write(xyz_str, compound, format="xyz")
@@ -1337,4 +1341,17 @@ def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Sti
     elif render_type == "VDW":
         view.addSurface(py3Dmol.VDW)
     view.zoomTo()
-    return view.show()
+
+    # Render config depending on the interface
+    is_streamlit = False
+    if "streamlit" in sys.modules:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+        if get_script_run_ctx() is not None:
+            is_streamlit = True
+
+    if is_streamlit:
+        html_content = view._make_html()
+        return html_content
+    else:
+        return view.show()  # Notebook
