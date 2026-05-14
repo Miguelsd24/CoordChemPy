@@ -20,7 +20,7 @@ from IPython.display import Markdown, display
 # ==========================================
 
 # Importing the ligands and metals data from the json files
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 with open(BASE_DIR / "data" / "metals.json") as f:
     data_metals = json.load(f)
