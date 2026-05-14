@@ -7,29 +7,30 @@ from dataclasses import dataclass
 
 try:
     from src.coordchem import (
-        ligands_list,
-        parse_metal,
-        electron_count,
-        metal_charge,
-        oxidation_state,
         data_ligands,
         data_metals,
+        electron_count,
+        ligands_list,
+        metal_charge,
+        oxidation_state,
+        parse_metal,
     )
 except:
-    from coordchem import (
-        ligands_list,
-        parse_metal,
-        electron_count,
-        metal_charge,
-        oxidation_state,
+    from coordchempy import (
         data_ligands,
         data_metals,
+        electron_count,
+        ligands_list,
+        metal_charge,
+        oxidation_state,
+        parse_metal,
     )
 
 
 # ==========================================
 # 📦 RESULT
 # ==========================================
+
 
 @dataclass
 class StabilityResult:
@@ -49,6 +50,7 @@ class StabilityResult:
 # 🔧 NORMALIZATION
 # ==========================================
 
+
 def normalize(f):
     return f.replace(" ", "")
 
@@ -57,10 +59,9 @@ def normalize(f):
 # 🧪 ENGINE
 # ==========================================
 
+
 class StabilityEngine:
-
     def __init__(self, formula):
-
         self.formula = normalize(formula)
 
         metals = parse_metal(self.formula)
@@ -76,20 +77,15 @@ class StabilityEngine:
         self.charge = metal_charge(self.formula)
         self.ox, _ = oxidation_state(self.formula)
 
-        self.m_data = data_metals.get(self.metal, {
-            "hardness": 5,
-            "group": 10
-        })
+        self.m_data = data_metals.get(self.metal, {"hardness": 5, "group": 10})
 
         self.series_bonus = self._series_bonus()
-
 
     # ==========================================
     # 🔥 SERIES BONUS
     # ==========================================
 
     def _series_bonus(self):
-
         d5 = {"Pd", "Ag", "Cd", "Pt", "Au", "Hg"}
         d4 = {"Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh"}
 
@@ -99,13 +95,11 @@ class StabilityEngine:
             return 5
         return 0
 
-
     # ==========================================
     # ⚡ ELECTRON COUNT (18e rule improved)
     # ==========================================
 
     def electron_score(self):
-
         # distinction CO / CN / phosphines
         strong_field = 18
         moderate_field = 16
@@ -124,19 +118,16 @@ class StabilityEngine:
 
         return max(0, min(100, score + self.series_bonus))
 
-
     # ==========================================
     # 🧲 HSAB (more contrast)
     # ==========================================
 
     def hsab_score(self):
-
         m_h = self.m_data.get("hardness", 5)
 
         scores = []
 
         for lig in self.ligands:
-
             lig = lig.replace("m-", "")
             l = data_ligands.get(lig, {})
 
@@ -150,37 +141,31 @@ class StabilityEngine:
 
         return sum(scores) / len(scores) * 100 if scores else 50
 
-
     # ==========================================
     # 🧷 CHELATION (IMPORTANT FIX)
     # ==========================================
 
     def chelate_score(self):
-
         dent = 0
 
         for lig in self.ligands:
-
             lig = lig.replace("m-", "")
             dent += data_ligands.get(lig, {}).get("denticity", 1)
 
         # real chelate effect boost
-        bonus = (dent - self.cn)
+        bonus = dent - self.cn
 
         # stronger exponential reward
         return max(0, min(100, 60 + bonus * 25))
-
 
     # ==========================================
     # ⚛️ FIELD (NORMALIZED BY CN)
     # ==========================================
 
     def field_score(self):
-
         score = 0
 
         for lig in self.ligands:
-
             lig = lig.replace("m-", "")
             score += data_ligands.get(lig, {}).get("field", 1)
 
@@ -189,29 +174,24 @@ class StabilityEngine:
 
         return min(100, normalized * 25)
 
-
     # ==========================================
     # ⚖️ CHARGE
     # ==========================================
 
     def charge_score(self):
-
         return max(0, 100 - abs(self.charge) * 8)
-
 
     # ==========================================
     # 🧬 GEOMETRY (d8 FIXED)
     # ==========================================
 
     def geometry_score(self):
-
         cn = self.cn
 
         if cn == 6:
             return 95
 
         if cn == 4:
-
             # REAL FIX: d8 square planar dominance
             if self.metal in {"Ni", "Pd", "Pt"}:
                 return 98  # IMPORTANT BOOST
@@ -225,33 +205,25 @@ class StabilityEngine:
 
         return 60
 
-
     # ==========================================
     # 🔥 OXIDATION
     # ==========================================
 
     def oxidation_score(self):
-
-        preferred = data_metals.get(self.metal, {}).get(
-            "possible_ox_state",
-            [self.ox]
-        )
+        preferred = data_metals.get(self.metal, {}).get("possible_ox_state", [self.ox])
 
         diff = min(abs(self.ox - p) for p in preferred)
 
         return max(30, 100 - diff * 18)
-
 
     # ==========================================
     # 🔗 BACKBONDING (CO vs CN FIX)
     # ==========================================
 
     def backbonding_score(self):
-
         score = 0
 
         for lig in self.ligands:
-
             lig = lig.replace("m-", "")
 
             info = data_ligands.get(lig, {})
@@ -268,29 +240,24 @@ class StabilityEngine:
 
         return min(100, score + self.series_bonus)
 
-
     # ==========================================
     # 🧱 STERIC
     # ==========================================
 
     def steric_score(self):
-
         bulk = 0
 
         for lig in self.ligands:
-
             lig = lig.replace("m-", "")
             bulk += data_ligands.get(lig, {}).get("steric_bulk", 1)
 
         return max(0, 100 - bulk * 3)
-
 
     # ==========================================
     # 🏆 FINAL SCORE (REBALANCED)
     # ==========================================
 
     def final_score(self):
-
         parts = {
             "electron": self.electron_score(),
             "hsab": self.hsab_score(),
@@ -317,7 +284,4 @@ class StabilityEngine:
 
         total = sum(parts[k] * weights[k] for k in parts)
 
-        return StabilityResult(
-            **parts,
-            total=round(max(0, min(100, total)), 2)
-        )
+        return StabilityResult(**parts, total=round(max(0, min(100, total)), 2))
