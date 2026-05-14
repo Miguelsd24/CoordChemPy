@@ -4,8 +4,10 @@
 
 import io
 import json
+import math
 import re
 import string
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +15,7 @@ import py3Dmol
 import roman
 from ase import Atoms
 from ase.io import write
+from IPython import get_ipython
 from IPython.display import Markdown, display
 
 # ==========================================
@@ -127,7 +130,7 @@ def formula_verif_and_parsing(formula):
     return match
 
 
-# === We use a function to verify the format of the counter ion/s formula === #
+# === We use a function to verify sthe format of the counter ion/s formula === #
 def counter_ions_verif(formula_counter_ions):
     # We verify that the formula is a string
     if not isinstance(formula_counter_ions, str):
@@ -346,7 +349,7 @@ def oxidation_state(formula):
             "The following compound is not likely to exist because the metal center cannot be in the oxidation state "
             + sign
             + str(metal_charge(formula))
-            + " according to the database"
+            + " according to the database."
         )
     else:
         remark = None
@@ -380,6 +383,16 @@ def electron_count(formula):
     # We finally return the number of electrons, however, if there are two metal centers,
     # we divide the number of electrons by 2 because the electrons are shared between the two metal centers (we can do that because all complexes are symetrical)
     return int(electrons) // 2 if len(parse_metal(formula)) == 2 else int(electrons)
+
+
+# === Function which return if the complexs follows the 16 or 18 electron rule === #
+def electrons_probable_complex(formula):
+    if electron_count(formula) == 16 or electron_count(formula) == 18:
+        return None
+    elif electron_count(formula) > 22:
+        return "This specific coordination complex is highly unstable and structurally unfeasible."
+    else:
+        return "This specific coordination complex does not follow the 16 or 18 electron rule, thus, it is probably not very stable. It can however exist."
 
 
 # === Function which calulate the electroni structure of the metal === #
@@ -483,6 +496,7 @@ def should_use_the_coeff_name2(ligand_name):
     return False
 
 
+# === Function used for naming the counter ions part of the complex name === #
 def naming_counter_ions(formula_counter_ions):
     if formula_counter_ions is None:
         return ""
@@ -615,65 +629,247 @@ def naming_compound(formula, formula_counter_ions=None):
 # STABILITY ESTIMATION SECTION
 # ==========================================
 
-# ------------------------------------------------------------------------------------------------------------------------------- VERIFIE JUSQU ICI -------------------------------------------------------------------------------------------------------------------------------
+
+@dataclass
+class StabilityResult:
+    total: float
+    electron: float
+    hsab: float
+    chelate: float
+    field: float
+    charge: float
+    geometry: float
+    oxidation: float
+    backbonding: float
+    steric: float
 
 
-def ligand_field_strength(formula):
-    """
-    Estimation simple du champ de ligand (qualitative -> numérique)
-    """
-    ligands = ligands_list(formula)
+# Stability class combining all function to calculate the stability score
+class StabilityEngine:
+    def __init__(self, formula):
+        self.formula = formula.replace(" ", "")
 
-    field_score = 0
+        metals = parse_metal(self.formula)
+        if not metals:
+            raise ValueError("No metal found")
 
-    for lig in ligands:
-        if lig.startswith("m-"):
-            lig = lig[2:]
+        self.metal = metals[0]
+        self.ligands = ligands_list(self.formula)
 
-        info = data_ligands.get(lig, {})
+        self.cn = len(self.ligands)
+        self.electrons = electron_count(self.formula)
 
-        # classification simple (tu peux enrichir plus tard)
-        if info.get("field") == "strong":
-            field_score += 2
-        elif info.get("field") == "medium":
-            field_score += 1
-        else:
-            field_score += 0
+        self.charge = metal_charge(self.formula)
+        self.ox, _ = oxidation_state(self.formula)
 
-    return field_score
+        self.m_data = data_metals.get(self.metal, {"hardness": 5, "group": 10})
 
+        self.series_bonus = self._series_bonus()
 
-def crystal_field_stabilization(formula):
-    """
-    Approximation CFSE (très simplifiée)
-    """
-    electrons = electron_count(formula)
+    # ==========================================
+    # 🔥 SERIES BONUS
+    # ==========================================
 
-    # approximation: d electron count influence
-    return (electrons - 6) * ligand_field_strength(formula)
+    def _series_bonus(self):
+        d5 = {"Pd", "Ag", "Cd", "Pt", "Au", "Hg"}
+        d4 = {"Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh"}
 
+        if self.metal in d5:
+            return 10
+        if self.metal in d4:
+            return 5
+        return 0
 
-def stability_index(formula, formula_counter_ions=None):
-    """
-    Score global de stabilité (0-100)
-    """
-    cfse = crystal_field_stabilization(formula)
-    charge = abs(complexe_charge(formula, formula_counter_ions))
-    lig_score = ligand_field_strength(formula)
+    # ==========================================
+    # ⚡ ELECTRON COUNT (18e rule improved)
+    # ==========================================
 
-    score = 50
+    def electron_score(self):
+        # distinction CO / CN / phosphines
+        strong_field = 18
+        moderate_field = 16
 
-    # CFSE stabilise
-    score += cfse * 5
+        cn_boost_metal = {"Ni", "Pd", "Pt"}
 
-    # charge élevée = moins stable
-    score -= charge * 5
+        target = strong_field if self.metal in cn_boost_metal else moderate_field
 
-    # ligands forts stabilisent
-    score += lig_score * 3
+        gap = abs(self.electrons - target)
 
-    # clamp 0-100
-    return max(0, min(100, score))
+        score = 100 - (gap * 10)
+
+        # bonus Ni(CO)4 / Pt(CO) etc
+        if "CO" in self.formula:
+            score += 8
+
+        return max(0, min(100, score + self.series_bonus))
+
+    # ==========================================
+    # 🧲 HSAB (more contrast)
+    # ==========================================
+
+    def hsab_score(self):
+        m_h = self.m_data.get("hardness", 5)
+
+        scores = []
+
+        for lig in self.ligands:
+            lig = lig.replace("m-", "")
+            ligand = data_ligands.get(lig, {})
+
+            l_h = ligand.get("HSAB", {}).get("hardness", 5)
+            field = ligand.get("field", 1)
+
+            # stronger penalty for mismatch
+            match = math.exp(-0.45 * abs(m_h - l_h))
+
+            scores.append(match * (1 + field / 4))
+
+        return sum(scores) / len(scores) * 100 if scores else 50
+
+    # ==========================================
+    # 🧷 CHELATION (IMPORTANT FIX)
+    # ==========================================
+
+    def chelate_score(self):
+        dent = 0
+
+        for lig in self.ligands:
+            lig = lig.replace("m-", "")
+            dent += data_ligands.get(lig, {}).get("denticity", 1)
+
+        # real chelate effect boost
+        bonus = dent - self.cn
+
+        # stronger exponential reward
+        return max(0, min(100, 60 + bonus * 25))
+
+    # ==========================================
+    # ⚛️ FIELD (NORMALIZED BY CN)
+    # ==========================================
+
+    def field_score(self):
+        score = 0
+
+        for lig in self.ligands:
+            lig = lig.replace("m-", "")
+            score += data_ligands.get(lig, {}).get("field", 1)
+
+        # CN normalization (CRUCIAL FIX)
+        normalized = score / max(1, self.cn)
+
+        return min(100, normalized * 25)
+
+    # ==========================================
+    # ⚖️ CHARGE
+    # ==========================================
+
+    def charge_score(self):
+        return max(0, 100 - abs(self.charge) * 8)
+
+    # ==========================================
+    # 🧬 GEOMETRY (d8 FIXED)
+    # ==========================================
+
+    def geometry_score(self):
+        cn = self.cn
+
+        if cn == 6:
+            return 95
+
+        if cn == 4:
+            # REAL FIX: d8 square planar dominance
+            if self.metal in {"Ni", "Pd", "Pt"}:
+                return 98  # IMPORTANT BOOST
+            return 80
+
+        if cn == 5:
+            return 78
+
+        if cn == 2:
+            return 85
+
+        return 60
+
+    # ==========================================
+    # 🔥 OXIDATION
+    # ==========================================
+
+    def oxidation_score(self):
+        preferred = data_metals.get(self.metal, {}).get("possible_ox_state", [self.ox])
+
+        diff = min(abs(self.ox - p) for p in preferred)
+
+        return max(30, 100 - diff * 18)
+
+    # ==========================================
+    # 🔗 BACKBONDING (CO vs CN FIX)
+    # ==========================================
+
+    def backbonding_score(self):
+        score = 0
+
+        for lig in self.ligands:
+            lig = lig.replace("m-", "")
+
+            info = data_ligands.get(lig, {})
+
+            if info.get("pi_acceptor"):
+                score += 35  # stronger separation
+
+            # CN stronger than CO in this model
+            if lig == "CN":
+                score += 10
+
+            if lig == "CO":
+                score += 15
+
+        return min(100, score + self.series_bonus)
+
+    # ==========================================
+    # 🧱 STERIC
+    # ==========================================
+
+    def steric_score(self):
+        bulk = 0
+
+        for lig in self.ligands:
+            lig = lig.replace("m-", "")
+            bulk += data_ligands.get(lig, {}).get("steric_bulk", 1)
+
+        return max(0, 100 - bulk * 3)
+
+    # ==========================================
+    # 🏆 FINAL SCORE (REBALANCED)
+    # ==========================================
+
+    def final_score(self):
+        parts = {
+            "electron": self.electron_score(),
+            "hsab": self.hsab_score(),
+            "chelate": self.chelate_score(),
+            "field": self.field_score(),
+            "charge": self.charge_score(),
+            "geometry": self.geometry_score(),
+            "oxidation": self.oxidation_score(),
+            "backbonding": self.backbonding_score(),
+            "steric": self.steric_score(),
+        }
+
+        weights = {
+            "electron": 0.22,
+            "hsab": 0.17,
+            "chelate": 0.16,
+            "field": 0.12,
+            "charge": 0.08,
+            "geometry": 0.12,
+            "oxidation": 0.09,
+            "backbonding": 0.03,
+            "steric": 0.01,
+        }
+
+        total = sum(parts[k] * weights[k] for k in parts)
+
+        return StabilityResult(**parts, total=round(max(0, min(100, total)), 2))
 
 
 # ==========================================
@@ -727,7 +923,7 @@ def isomers(formula):
         letter = alphabet[n]
         key += letter + str(number[n])
 
-    if key == "Ma2b2" and find_geometry(formula)[1] == "square planar":
+    if key == "Ma2b2" and get_geometry(formula)[1] == "square planar":
         return 2, 0
     else:
         stereo = stereoisomers_dico.get(key)
@@ -776,69 +972,114 @@ def get_clean_formula(formula, formula_counter_ions=None):
 
 # === We use this function to verify that the compound follows the chemical rules
 # (This function regroups the cases which were not treated troughout the calculation, analysis, parsing ... functions) === #
-def chemical_rules(formula, formula_counter_ions=None):
+def chemical_rules(formula):
     # We verify that there is no bridging ligand if there is only one metal center
     if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
         raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
 
 
-# Final function which prints all the relevant information about the coordination compound
+# Final function which prints all the relevant information
 def analyze_complexe(formula, formula_counter_ions=None):
     # We first verify the chemical rules
-    chemical_rules(formula, formula_counter_ions)
+    chemical_rules(formula)
+
+    # We set a list which will contain each result line
     lines = []
 
     # Formula
-    lines.append(f"* **Formula** : {get_clean_formula(formula, formula_counter_ions)}")
+    lines.append(f"**Formula** : {get_clean_formula(formula, formula_counter_ions)}")
 
     # Nomenclature
     name = naming_compound(formula, formula_counter_ions)
-    lines.append(f"* **IUPAC Name** : {name}")
+    lines.append(f"**IUPAC Name** : {name}")
 
     # Metal charge
     metals = parse_metal(formula)
     charge = metal_charge(formula)
     charge_str = f"{charge}+" if charge > 0 else f"{charge}"
-    lines.append(f"* **Metal oxidation state** : {metals[0]} ({charge_str})")
+    lines.append(f"**Metal oxidation state** : {metals[0]} ({charge_str})")
 
     # Electronic structure
     e_list = electronic_structure(formula)
-    lines.append(
-        f"* **Electronic structure** : [{e_list[0]}] {e_list[1]}s{e_list[2]} {e_list[1] - 1}d{e_list[3]}"
-    )
 
-    # Configuration haut spin / bas spin
+    lines.append(
+        f"**Electronic structure** : "
+        f"[{e_list[0]}] {e_list[1]}s{e_list[2]} "
+        f"{e_list[1] - 1}d{e_list[3]}"
+    )
 
     # Electrons counting
     count = electron_count(formula)
-    lines.append(f"* **Electron count** : {count}")
+    lines.append(f"**Electron count** : {count}")
 
     # Isomers
-    if isomers(formula)[0] is None or isomers(formula)[1] is None:
+    iso = isomers(formula)
+
+    if iso[0] is None or iso[1] is None:
         lines.append(
-            "* **Isomers:** The number of isomers of this compound is not specified"
+            "**Isomers:** The number of isomers of this compound is not specified"
         )
+
     else:
         lines.append(
-            f"* **Isomers:** This compound has {isomers(formula)[0]} stereoisomers and {isomers(formula)[1]} enantiomeres pairs"
+            f"**Isomers:** This compound has "
+            f"{iso[0]} stereoisomers and "
+            f"{iso[1]} enantiomeres pairs"
         )
 
-    # Stability (NEW)
-    stability = stability_index(formula)
-    lines.append(f"* **Stability index** : {stability}/100")
+    # Stability
+    engine = StabilityEngine(formula)
+    result = engine.final_score()
+
+    lines.append(f"**Stability index** : {result.total}/100")
 
     # Geometry
-    geometry = find_geometry(formula)[1].capitalize()
-    lines.append(f"* **Probable geometry** : {geometry}")
+    geometry = get_geometry(formula)[1].capitalize()
+    lines.append(f"**Probable geometry** : {geometry}")
 
-    # Remarks (add according to electron rule)
-    remarks = oxidation_state(formula)[1]
-    if remarks is not None:
-        lines.append(f"* **Remarks:** {remarks}")
+    # Remarks
+    remark1 = oxidation_state(formula)[1]
+    remark2 = electrons_probable_complex(formula)
 
-    return lines, "\n".join(lines)
+    if remark1 is not None or remark2 is not None:
+        lines.append(f"**Remarks:** {remark1} {remark2}")
+
+    # =====================================
+    # Detect notebook
+    # =====================================
+
+    in_notebook = False
+
+    try:
+        shell = get_ipython().__class__.__name__
+
+        if shell == "ZMQInteractiveShell":
+            in_notebook = True
+
+    except Exception:
+        pass
+
+    # =====================================
+    # NOTEBOOK -> Markdown bullets
+    # =====================================
+
+    if in_notebook:
+        markdown_text = "\n".join(f"* {line}" for line in lines)
+
+        return display(Markdown(markdown_text))
+
+    # =====================================
+    # NORMAL PYTHON -> print clean lines
+    # =====================================
+
+    else:
+        for line in lines:
+            print(line)
+
+        return lines
 
 
+# Final function which prints all the relevant information about the coordination compound
 def show_analysis(formula, clean_counter_ions=None):
     return display(Markdown(analyze_complexe(formula, clean_counter_ions)[1]))
 
@@ -851,6 +1092,9 @@ def show_analysis(formula, clean_counter_ions=None):
 # COMPOUND MAIN GEOMETRY CALCULATION SECTION
 # ==========================================
 
+# For each geometry we set the coordinates of each ligand donor atom
+# (the metal center is at the origin by default)
+
 
 def linear(r):
     return [(r, 0, 0), (-r, 0, 0)]
@@ -859,7 +1103,7 @@ def linear(r):
 def tetrahedral(r):
     base = np.array([[1, 1, 1], [-1, -1, 1], [-1, 1, -1], [1, -1, -1]])
 
-    base = base / np.linalg.norm(base[0])  # normalisation
+    base = base / np.linalg.norm(base[0])  # Normalization
     base = r * base
 
     return [tuple(v) for v in base]
@@ -892,7 +1136,7 @@ def square_planar(r):
     return array
 
 
-def find_geometry(formula, r=0):
+def get_geometry(formula, r=0):
     cn = len(ligands_list(formula))
     if cn == 1:
         return [(r, 0, 0)], "linear"
@@ -915,6 +1159,8 @@ def find_geometry(formula, r=0):
 # ==========================================
 # LIGANDS GEOMETRY CALCULATION SECTION
 # ==========================================
+
+# For each geometry of the ligands  we set the internal coordinates of each ligand
 
 
 def ligand_linear(ligand, ligand_coord, r):
@@ -1004,42 +1250,41 @@ def get_geometry_ligand(ligand_input):
 # ==========================================
 
 
-def atoms_position_and_bond(formula, r=1.7):
-    bonding = []
+# Function which returns a list with the position of each atom of the complex.
+# We use the coordinates of the ligand donor atoms and the internal coordination of each ligand
+def atoms_position(
+    formula, r=1.7
+):  # The bond length is set to 1.7 A as py3Dmol can create automatically each bond using this value
     nb_of_atoms = 0
     position = [(0, 0, 0)]
-    big_array = find_geometry(formula, r)[0]
+    big_array = get_geometry(formula, r)[0]
     ligand_list = ligands_list(formula)
     for i, ligand in enumerate(ligand_list):
         if get_geometry_ligand(ligand) == "sphere":
             nb_of_atoms += 1
             position += [big_array[i]]
-            bonding += (0, nb_of_atoms)
         elif get_geometry_ligand(ligand) == "linear":
             nb_of_atoms += 2
             position += [big_array[i]]
             position += ligand_linear(ligand, big_array[i], r)
-            bonding += (0, nb_of_atoms - 1)
         elif get_geometry_ligand(ligand) == "dlinear":
             nb_of_atoms += 3
             position += [big_array[i]]
             position += ligand_dlinear(ligand, big_array[i], r)
-            bonding += (0, nb_of_atoms - 2)
         elif get_geometry_ligand(ligand) == "bent":
             nb_of_atoms += 3
             position += [big_array[i]]
             position += ligand_bent(ligand, big_array[i], r)
-            bonding += (0, nb_of_atoms - 2)
         elif get_geometry_ligand(ligand) == "tetrahedral":
             nb_of_atoms += 4
             position += [big_array[i]]
             position += ligand_tetrahedral(ligand, big_array[i], r)
-            bonding += (0, nb_of_atoms - 3)
         else:
             raise ValueError("Error: Geometry of the ligand not available in 3D")
-    return position, bonding
+    return position
 
 
+# Function which return all atoms symbols in a list
 def get_atoms(ligand_input):
     ligand_info = data_ligands.get(ligand_input)
     donor_atom = ligand_info.get("donor_atoms")
@@ -1058,6 +1303,7 @@ def get_atoms(ligand_input):
     return result
 
 
+# Function which returns a list with each atom which will be used to connect each atom to its corresponding sphere in the rendering
 def atom_symbols(formula):
     metal = parse_metal(formula)
     atoms_list = metal
@@ -1068,24 +1314,24 @@ def atom_symbols(formula):
     return atoms_list
 
 
+# Function which creates the compound to render as a ASE object
 def create_compound_render(formula):
-    compound = Atoms(
-        atom_symbols(formula), positions=atoms_position_and_bond(formula)[0]
-    )
+    compound = Atoms(atom_symbols(formula), positions=atoms_position(formula))
     return compound
 
 
+# Function which convertes the ASE to a render. It optimises the render for a Notebook
 def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Stick"):
-    # Conversion ASE atoms -> XYZ string
+    # ASE atoms -> XYZ string
     xyz_str = io.StringIO()
     write(xyz_str, compound, format="xyz")
     xyz_content = xyz_str.getvalue()
 
-    # Initialisation de la vue
+    # Creation of the render zone
     view = py3Dmol.view(width=400, height=400)
     view.addModel(xyz_content, "xyz")
 
-    # Application des styles
+    # Style render type
     if render_type == "Ball and Stick":
         view.setStyle({"stick": {}, "sphere": {"scale": atoms_size}})
     elif render_type == "Stick":
@@ -1096,29 +1342,5 @@ def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Sti
         view.setStyle({"line": {}})
     elif render_type == "VDW":
         view.addSurface(py3Dmol.VDW)
-
     view.zoomTo()
-
-    # La méthode .show() est l'équivalent optimisé pour Notebook
     return view.show()
-
-
-"""
-def metal_radii(formula):
-    metal = parse_metal(formula)[0]
-    coordination = len(ligands_list(formula))
-    charge = metal_charge(formula)
-    radii = get_ionic_radii(metal, charge, coordination)
-    return radii
-
-def ligand_radii(formula):
-    ligands = ligands_list(formula)
-    r = 0
-    for ligand in ligands:
-        if data_ligands[ligand].get("radii") != False:
-            r += data_ligands[ligand]["radii"]
-        else:
-            donor_atom = data_ligands[ligand]["donor_atoms"][0]
-            r += covalent_radii[atomic_numbers[donor_atom]]
-    return r/len(ligands)
-"""
