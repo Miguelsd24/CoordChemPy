@@ -810,5 +810,26 @@
     "orbital_type": "allylic_pi_delocalized_donor",
     "electronegativity_effective": 3.0,
     "charge_density_effective": 6.3
+  },
+  "OAc": {
+  "name": "acetate",
+  "abbr": "OAc",
+  "SMILES": "CC(=O)[O-]",
+  "denticity": 2,
+  "charge": -1,
+  "donor_atoms": ["O", "O"],
+  "bridging_e": 2,
+  "donor_e": 2,
+  "type": "X",
+  "HSAB": {
+    "hardness": 6.5,
+    "softness": 3.5,
+    "polarizability": 4.2,
+    "donor_index": 6.8,
+    "pi_backbonding_index": 3.0
+  },
+  "orbital_type": "carboxylate_oxygen_donor",
+  "electronegativity_effective": 3.5,
+  "charge_density_effective": 6.0
   }
 }

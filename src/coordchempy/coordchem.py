@@ -119,7 +119,7 @@ def formula_verif_and_parsing(formula):
         raise ValueError("Error: Formula (coordination sphere) cannot be empty")
     # We verify that the formula has the appropriate format with re.match()
     match = re.match(
-        r"\[([sdt])?([A-Z][a-z]?)([1-9]\d*)?(\((?:.+)\)(?:[1-9]\d*))*\]([0-9+-]+)?$",
+        r"\[([sdt])?([A-Z][a-z]?)([1-9]\d*)?(\((?:.+)\)(?:[1-9]\d*)?)*\]([0-9+-]+)?$",
         clean_formula,
     )
     if not match:
@@ -152,7 +152,7 @@ def counter_ions_verif(formula_counter_ions):
 
 
 # === We use a function to parse counter ion/s formula === #
-def counter_ions_parsing(formula_counter_ions):
+def parse_counter_ions(formula_counter_ions):
     clean_formula = counter_ions_verif(formula_counter_ions)
     match = re.findall(r"\((.*?)\)(\d*)", clean_formula)
     # For each counter ion, we isolate it and its stoechiometric coefficient
@@ -206,7 +206,7 @@ def bond_order(formula):
     # We import the match result from the formula format verification function to avoid doing it twice
     match = formula_verif_and_parsing(formula)
     # We stock a dico to link the letter to a number of metal-metal bond
-    order_dico = {"s": 1, "d": 2, "t": 3}
+    order_dico = {"s": 1, "d": 2, "t": 3, "q": 4}
     # We extract the letter accordint to the metal coefficient value (if no coeff, cooef = 1)
     order = order_dico.get(match.group(1), 0)
     if match.group(3) is None:
@@ -216,7 +216,7 @@ def bond_order(formula):
     # We return an error if there is a bond_order specified for a mononuclear complex and we return the bond order otherwise
     if coeff == 1 and order != 0:
         raise ValueError(
-            "Error: s,d,t are only to specifiy the bond between two metals center not one"
+            "Error: s,d,t,q are only to specifiy the bond between two metals center not one"
         )
     return order
 
@@ -288,7 +288,7 @@ def parse_elements(formula):
 
 
 def counter_ions_charge(formula_counter_ions):
-    counter_ions = counter_ions_parsing(formula_counter_ions)[0]
+    counter_ions = parse_counter_ions(formula_counter_ions)[0]
     charge = 0
     for counter_ion in counter_ions:
         charge += data_counter_ions[counter_ion]["charge"]
@@ -500,7 +500,7 @@ def should_use_the_coeff_name2(ligand_name):
 def naming_counter_ions(formula_counter_ions):
     if formula_counter_ions is None:
         return ""
-    counter_ions_list = counter_ions_parsing(formula_counter_ions)
+    counter_ions_list = parse_counter_ions(formula_counter_ions)
     ions = counter_ions_list[1]
     ions_with_coeffs = []
     # We first sort the ligands in alphabetic order and keep their respective coefficients by putting them in a list of tuple (ligand(sorted), coeff)
@@ -595,10 +595,7 @@ def naming_compound(formula, formula_counter_ions=None):
     # We add the metal name
     name += metal_name
 
-    # We add the charge according to preference selected in the site (roman/integer) !!not implemented yet, we use roman by default for the moment!!
-
-    # charge_int = complexe_charge(formula)
-    # name += (f"({charge_int})")
+    # We add the charge according to roman number notation.
 
     charge = metal_charge(formula)
     charge_roman = roman.toRoman(abs(charge))
@@ -616,9 +613,9 @@ def naming_compound(formula, formula_counter_ions=None):
     if name.startswith("-"):
         name = name[1:]
     name = re.sub(r" -μ-", " μ-", name)
-    # We lastly add the counter ions, at the end of the formul, if the sphere charge is positive
+    # We lastly add the counter ions, at the end of the formula, if the sphere charge is positive
     if complexe_charge(formula, formula_counter_ions) > 0:
-        name += " " + naming_counter_ions(formula_counter_ions)
+        name += " " + naming_counter_ions(formula_counter_ions)[:-1]
     name = (
         name[:1].capitalize() + name[1:]
     )  # We avoid the .capitalize to interact with the roman number
@@ -979,7 +976,7 @@ def chemical_rules(formula):
 
 
 # Final function which prints all the relevant information
-def analyze_complex(formula, formula_counter_ions=None):
+def analyse_compound(formula, formula_counter_ions=None):
     # We first verify the chemical rules
     chemical_rules(formula)
 

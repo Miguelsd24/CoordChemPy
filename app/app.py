@@ -48,9 +48,9 @@ if st.button("Analysis"):
             # Si counter_ions est vide, on appelle la fonction avec un seul argument
             # Sinon, on passe les deux.
             if counter_ions:
-                result = cc.analyze_complex(coord_compound, counter_ions)
+                result = cc.analyse_compound(coord_compound, counter_ions)
             else:
-                result = cc.analyze_complex(coord_compound)
+                result = cc.analyse_compound(coord_compound)
             st.session_state.analysis_result = result
 
         except Exception as e:
