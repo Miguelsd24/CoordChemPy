@@ -307,7 +307,8 @@ def complexe_charge(formula, formula_counter_ions=None):
                 "Error: Counter ions total charge doesn't match the charge in the coordination sphere formula"
             )
         if counter_ions_charge(formula_counter_ions) == 0:
-            raise ValueError(
+ 
+           raise ValueError(
                 "Error: The counter ions cannot have a neutral total charge"
             )
         else:
@@ -1344,3 +1345,75 @@ def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Sti
         view.addSurface(py3Dmol.VDW)
     view.zoomTo()
     return view.show()
+
+
+def lowspin(nb_electrons):
+    
+    # calculations of the repartition of the electrons in the orbitals for low spin
+
+    # Low spin is the repartition of the electrons in the orbitals with the lowest energy (t2g) forming pairs in these and then filling the higher energy orbitals (eg), which leads to more paired electrons and a lower total spin.
+    # 5 orbitals (_ _ _ lowest   _ _ highest energy) adding order : the three lower, the two higher
+
+    nb_pair = nb_electrons % 2
+    nb_free = nb_electrons - nb_pair * 2
+
+    return nb_pair, nb_free
+
+def highspin(nb_electrons):
+    
+    # calculations of the repartition of the electrons in the orbitals for high spin
+
+    # High spin is the repartition of the electrons in the orbitals with the highest energy (eg) before forming pairs in the lower energy orbitals (t2g), which leads to more unpaired electrons and a higher total spin.
+    # 5 orbitals (_ _ _ lowest   _ _ highest energy) adding order : the three lower, the two higher
+
+    nb_pair = 0
+    nb_free = 0
+
+    if nb_electrons <= 5:
+        nb_free = nb_electrons
+        nb_pair = 0
+    else:
+        electrons_remaining = nb_electrons - 5
+
+        nb_free = 5 - electrons_remaining
+        nb_pair = electrons_remaining
+
+    return nb_pair, nb_free
+
+def find_type_spin(nb_electrons):
+    # on cherche si c'est high spin ou low spin ( DUR, ligand field theory or metal configuration and position in the periodic table) )
+    return lowspin(nb_electrons)
+    #todo
+    # return highspin(nb_electrons)
+
+def Fill_orbitals(p,s):
+    result = [0,0,0,0,0] # 3 first = low energy, 2 last = high energy
+
+
+    for i in range(len(result)):
+        if p > 0:
+            result[i] += 2
+            p-=1
+        else:
+            if s > 0 :
+                result[i] += 1
+                s-=1
+
+    return result
+def Jahn_Teller_distorsion(orbitals):
+    #uneven filing of the the t2g or eg orbitals leads to a Jahn-Teller distorsion
+    for i in range(2):
+        if orbitals[i] != orbitals[i+1]:
+            return "Weak Jahn-Teller distorsion"
+    for i in range(3,4):
+        if orbitals[i] != orbitals[i+1]:
+            return "Strong Jahn-Teller distorsion"
+    return "No Jahn-Teller distorsion"
+
+
+
+nb_elec = 8
+p, s = highspin(nb_elec)
+print("p:",p,"s:",s)
+print(Fill_orbitals(p,s))
+print(Jahn_Teller_distorsion(Fill_orbitals(p,s)))
