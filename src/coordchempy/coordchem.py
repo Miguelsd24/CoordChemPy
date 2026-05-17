@@ -1,12 +1,12 @@
 # ==========================================
 # IMPORTS
 # ==========================================
-
 import io
 import json
 import math
 import re
 import string
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -119,7 +119,7 @@ def formula_verif_and_parsing(formula):
         raise ValueError("Error: Formula (coordination sphere) cannot be empty")
     # We verify that the formula has the appropriate format with re.match()
     match = re.match(
-        r"\[([sdt])?([A-Z][a-z]?)([1-9]\d*)?(\((?:.+)\)(?:[1-9]\d*))*\]([0-9+-]+)?$",
+        r"\[([sdt])?([A-Z][a-z]?)([1-9]\d*)?(\((?:.+)\)(?:[1-9]\d*)?)*\]([0-9+-]+)?$",
         clean_formula,
     )
     if not match:
@@ -152,7 +152,7 @@ def counter_ions_verif(formula_counter_ions):
 
 
 # === We use a function to parse counter ion/s formula === #
-def counter_ions_parsing(formula_counter_ions):
+def parse_counter_ions(formula_counter_ions):
     clean_formula = counter_ions_verif(formula_counter_ions)
     match = re.findall(r"\((.*?)\)(\d*)", clean_formula)
     # For each counter ion, we isolate it and its stoechiometric coefficient
@@ -206,7 +206,7 @@ def bond_order(formula):
     # We import the match result from the formula format verification function to avoid doing it twice
     match = formula_verif_and_parsing(formula)
     # We stock a dico to link the letter to a number of metal-metal bond
-    order_dico = {"s": 1, "d": 2, "t": 3}
+    order_dico = {"s": 1, "d": 2, "t": 3, "q": 4}
     # We extract the letter accordint to the metal coefficient value (if no coeff, cooef = 1)
     order = order_dico.get(match.group(1), 0)
     if match.group(3) is None:
@@ -216,7 +216,7 @@ def bond_order(formula):
     # We return an error if there is a bond_order specified for a mononuclear complex and we return the bond order otherwise
     if coeff == 1 and order != 0:
         raise ValueError(
-            "Error: s,d,t are only to specifiy the bond between two metals center not one"
+            "Error: s,d,t,q are only to specifiy the bond between two metals center not one"
         )
     return order
 
@@ -288,7 +288,7 @@ def parse_elements(formula):
 
 
 def counter_ions_charge(formula_counter_ions):
-    counter_ions = counter_ions_parsing(formula_counter_ions)[0]
+    counter_ions = parse_counter_ions(formula_counter_ions)[0]
     charge = 0
     for counter_ion in counter_ions:
         charge += data_counter_ions[counter_ion]["charge"]
@@ -353,7 +353,7 @@ def oxidation_state(formula):
             + " according to the database."
         )
     else:
-        remark = None
+        remark = ""
     # We return an error if the oxidation state is too large or too small to rule very impossible compounds, thus the limit is +10 and -5
     # (We let +10,+9,+8... and some negative values because we'd like our program to compute even not possible compounds to let the user understand why they are not possible)
     if ox_state < 0 or ox_state > 12:
@@ -389,7 +389,7 @@ def electron_count(formula):
 # === Function which return if the complexs follows the 16 or 18 electron rule === #
 def electrons_probable_complex(formula):
     if electron_count(formula) == 16 or electron_count(formula) == 18:
-        return None
+        return ""
     elif electron_count(formula) > 22:
         return "This specific coordination complex is highly unstable and structurally unfeasible."
     else:
@@ -501,7 +501,7 @@ def should_use_the_coeff_name2(ligand_name):
 def naming_counter_ions(formula_counter_ions):
     if formula_counter_ions is None:
         return ""
-    counter_ions_list = counter_ions_parsing(formula_counter_ions)
+    counter_ions_list = parse_counter_ions(formula_counter_ions)
     ions = counter_ions_list[1]
     ions_with_coeffs = []
     # We first sort the ligands in alphabetic order and keep their respective coefficients by putting them in a list of tuple (ligand(sorted), coeff)
@@ -576,14 +576,14 @@ def naming_compound(formula, formula_counter_ions=None):
 
     # Before deviding the coefficients by 2 in case of a dinuclear complex, we verify that the compound is well symmetric (to avoid having a float as the coefficient)
     if len(metals) == 2:
-        for ligand_name, coeff in ligands_with_coeffs:
+        for _, coeff in ligands_with_coeffs:
             if coeff > 0 and coeff % 2 != 0:
                 raise ValueError(
                     "Error: The compound is not symmetric, the coefficients of the non-bridging ligands must all be even integers"
                 )
 
     # 3. TERMINAL LIGANDS
-    for i, (ligand_name, coeff) in enumerate(ligands_with_coeffs):
+    for ligand_name, coeff in ligands_with_coeffs:
         if coeff > 0:
             if should_use_the_coeff_name2(ligand_name) is True:
                 # We divide the coefficient by 1 or 2 to take into account the case of symmetric binuclear complexes
@@ -596,10 +596,7 @@ def naming_compound(formula, formula_counter_ions=None):
     # We add the metal name
     name += metal_name
 
-    # We add the charge according to preference selected in the site (roman/integer) !!not implemented yet, we use roman by default for the moment!!
-
-    # charge_int = complexe_charge(formula)
-    # name += (f"({charge_int})")
+    # We add the charge according to roman number notation.
 
     charge = metal_charge(formula)
     charge_roman = roman.toRoman(abs(charge))
@@ -617,9 +614,9 @@ def naming_compound(formula, formula_counter_ions=None):
     if name.startswith("-"):
         name = name[1:]
     name = re.sub(r" -μ-", " μ-", name)
-    # We lastly add the counter ions, at the end of the formul, if the sphere charge is positive
+    # We lastly add the counter ions, at the end of the formula, if the sphere charge is positive
     if complexe_charge(formula, formula_counter_ions) > 0:
-        name += " " + naming_counter_ions(formula_counter_ions)
+        name += " " + naming_counter_ions(formula_counter_ions)[:-1]
     name = (
         name[:1].capitalize() + name[1:]
     )  # We avoid the .capitalize to interact with the roman number
@@ -980,7 +977,7 @@ def chemical_rules(formula):
 
 
 # Final function which prints all the relevant information
-def analyze_complexe(formula, formula_counter_ions=None):
+def analyse_compound(formula, formula_counter_ions=None):
     # We first verify the chemical rules
     chemical_rules(formula)
 
@@ -1035,54 +1032,52 @@ def analyze_complexe(formula, formula_counter_ions=None):
     lines.append(f"**Stability index** : {result.total}/100")
 
     # Geometry
-    geometry = get_geometry(formula)[1].capitalize()
-    lines.append(f"**Probable geometry** : {geometry}")
+    if len(ligands_list(formula)) < 6:
+        geometry = get_geometry(formula)[1].capitalize()
+        lines.append(f"**Probable geometry** : {geometry}")
 
     # Remarks
     remark1 = oxidation_state(formula)[1]
     remark2 = electrons_probable_complex(formula)
 
-    if remark1 is not None or remark2 is not None:
+    if remark1 != "" or remark2 != "":
         lines.append(f"**Remarks:** {remark1} {remark2}")
+    return render_analysis(lines)
 
-    # =====================================
-    # Detect notebook
-    # =====================================
 
-    in_notebook = False
+# Change the render depending on the interface (Notebook, Streamlit, Terminal)
+def render_analysis(lines):
+    is_streamlit = False
+    is_notebook = False
 
+    # Check Streamlit
+    if "streamlit" in sys.modules:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+        if get_script_run_ctx() is not None:
+            is_streamlit = True
+
+    # Check Notebook
     try:
         shell = get_ipython().__class__.__name__
-
         if shell == "ZMQInteractiveShell":
-            in_notebook = True
-
-    except Exception:
+            is_notebook = True
+    except NameError:
         pass
 
-    # =====================================
-    # NOTEBOOK -> Markdown bullets
-    # =====================================
-
-    if in_notebook:
+    # Render depending on the interface
+    if is_notebook:
         markdown_text = "\n".join(f"* {line}" for line in lines)
-
         return display(Markdown(markdown_text))
 
-    # =====================================
-    # NORMAL PYTHON -> print clean lines
-    # =====================================
+    elif is_streamlit:
+        markdown_text = "\n\n".join(lines)
+        return markdown_text
 
     else:
-        for line in lines:
-            print(line)
-
-        return lines
-
-
-# Final function which prints all the relevant information about the coordination compound
-def show_analysis(formula, clean_counter_ions=None):
-    return display(Markdown(analyze_complexe(formula, clean_counter_ions)[1]))
+        # Terminal (Standard .py)
+        text = "\n".join(lines).replace("**", "")
+        return text
 
 
 # ==========================================
@@ -1322,7 +1317,7 @@ def create_compound_render(formula):
 
 
 # Function which convertes the ASE to a render. It optimises the render for a Notebook
-def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Stick"):
+def render_complex(compound, atoms_size=0.4, render_type="Ball and Stick"):
     # ASE atoms -> XYZ string
     xyz_str = io.StringIO()
     write(xyz_str, compound, format="xyz")
@@ -1344,8 +1339,20 @@ def render_molecule_notebook(compound, atoms_size=0.4, render_type="Ball and Sti
     elif render_type == "VDW":
         view.addSurface(py3Dmol.VDW)
     view.zoomTo()
-    return view.show()
 
+    # Render config depending on the interface
+    is_streamlit = False
+    if "streamlit" in sys.modules:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+        if get_script_run_ctx() is not None:
+            is_streamlit = True
+
+    if is_streamlit:
+        html_content = view._make_html()
+        return html_content
+    else:
+        return view.show()  # Notebook
 
 def lowspin(nb_electrons):
     
