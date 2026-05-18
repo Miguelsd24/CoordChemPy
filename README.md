@@ -28,10 +28,9 @@ pip install coordchempy
 ### Importation
 ```python
 import coordchempy
-...
 ```
 ### Functions list and descriptions
-All functions are listed and described in a presesntation notebook, in the notebook folder.
+All functions are listed and described in a presentation notebook, in the notebook folder.
 
 ## Contributing
 Contributors are welcome to suggest improvements at https://github.com/Miguelsd24/coordchempy
