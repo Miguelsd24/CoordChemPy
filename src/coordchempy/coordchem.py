@@ -1299,12 +1299,15 @@ def atom_symbols(formula):
 
 # Function which creates the compound to render as a ASE object
 def create_compound_render(formula):
+    if len(parse_metal(formula)) == 2:
+        raise ValueError("Error: Dinuclear complexes are not available in 3D")
     compound = Atoms(atom_symbols(formula), positions=atoms_position(formula))
     return compound
 
 
 # Function which convertes the ASE to a render. It optimises the render for a Notebook
-def render_complex(compound, atoms_size=0.4, render_type="Ball and Stick"):
+def render_complex(formula, atoms_size=0.4, render_type="Ball and Stick"):
+    compound = create_compound_render(formula)
     # ASE atoms -> XYZ string
     xyz_str = io.StringIO()
     write(xyz_str, compound, format="xyz")
@@ -1340,6 +1343,11 @@ def render_complex(compound, atoms_size=0.4, render_type="Ball and Stick"):
         return html_content
     else:
         return view.show()  # Notebook
+
+
+# ==========================================
+# LOW SPIN HIGH SPIN
+# ==========================================
 
 
 def lowspin(nb_electrons):
