@@ -231,6 +231,7 @@ def parse_ligands(formula):
     # For each ligand in the ligands, we isolate the stoechiometric coefficient and test if the ligands are in the database
     ligand_list = []
     coeff_list = []
+    each_ligand = []
     for ligand, coeff in match:
         coeff = int(coeff) if coeff != "" else 1
         if (
@@ -247,28 +248,15 @@ def parse_ligands(formula):
             # We return a list of the ligand times its coefficient (the coefficient is negative if the ligand is bridging)
             coeff_list.extend([coeff])
             ligand_list.extend([find_ligand(ligand)])
-    return ligand_list, coeff_list
-
-
-# === Function which creates a list with all the ligands times their coeficient.
-# This list is useful to use loops in the calculation function like that There is non need to deal with number later === #
-def ligands_list(formula):
-    ligands_list = []
-    ligands = parse_ligands(formula)[0]
-    coeff = parse_ligands(formula)[1]
-    for n in range(len(ligands)):
-        if coeff[n] < 0:
-            ligands_list.extend(["m-" + ligands[n]] * (coeff[n] * -1))
-        else:
-            ligands_list.extend([ligands[n]] * coeff[n])
-    return ligands_list
+            each_ligand.extend([find_ligand(ligand)] * coeff)
+    return each_ligand, ligand_list, coeff_list
 
 
 # ===  Function which counts the number of bridging ligands === #
 def count_bridging_ligands(formula):
     # For each bridging ligand in the ligands list we add + 1 to num and we return num at the end
     num = 0
-    for ligand in ligands_list(formula):
+    for ligand in parse_ligands(formula)[0]:
         if ligand.startswith("m-"):
             num += 1
     return num
@@ -277,7 +265,7 @@ def count_bridging_ligands(formula):
 # ===  Function which put the metal and ligands in a same list with their respective stoechiometric coefficient === #
 def parse_elements(formula):
     elements = []
-    elements.extend(ligands_list(formula))
+    elements.extend(parse_ligands(formula)[0])
     elements.extend(parse_metal(formula))
     return elements
 
@@ -307,8 +295,7 @@ def complexe_charge(formula, formula_counter_ions=None):
                 "Error: Counter ions total charge doesn't match the charge in the coordination sphere formula"
             )
         if counter_ions_charge(formula_counter_ions) == 0:
- 
-           raise ValueError(
+            raise ValueError(
                 "Error: The counter ions cannot have a neutral total charge"
             )
         else:
@@ -317,7 +304,7 @@ def complexe_charge(formula, formula_counter_ions=None):
 
 # === Function which calulate the sum of all ligands' charges === #
 def ligands_charge(formula):
-    ligands = ligands_list(formula)
+    ligands = parse_ligands(formula)[0]
     charge = 0
     # We seperate the case of terminal or chelating/bridging ligands
     for ligand in ligands:
@@ -368,7 +355,7 @@ def electron_count(formula):
     # We first set the number of electrons as the contributtion of the metal/s center/s
     electrons = oxidation_state(formula)[0] * len(parse_metal(formula))
     # We then add the contribution of each ligand according to the database and of the ligand type
-    for ligand in ligands_list(formula):
+    for ligand in parse_ligands(formula)[0]:
         if ligand.startswith("m-"):
             electrons += data_ligands[ligand[2:]]["bridging_e"]
         else:
@@ -520,8 +507,8 @@ def naming_counter_ions(formula_counter_ions):
 def naming_compound(formula, formula_counter_ions=None):
     # We set the data nedded and empty list or string to stock the result
     parsed_data = parse_ligands(formula)
-    ligands = parsed_data[0]
-    coeffs = parsed_data[1]
+    ligands = parsed_data[1]
+    coeffs = parsed_data[2]
     metals = parse_metal(formula)
     ligands_with_coeffs = []
     name = ""
@@ -560,7 +547,7 @@ def naming_compound(formula, formula_counter_ions=None):
     n = 1  # We set n = 1 by default. This number will alows us to devide by two the coefficients in case of a symmetric binuclear complex
     if (
         len(metals) == 2
-        and len(ligands_list(formula)) - count_bridging_ligands(formula)
+        and len(parse_ligands(formula)[0]) - count_bridging_ligands(formula)
         > 0  # We verify if there is at least one non-bridging ligand and in this case we use the second set of prefixes
     ):
         name += (
@@ -570,7 +557,7 @@ def naming_compound(formula, formula_counter_ions=None):
         last_parenthesis = True
     elif (
         len(metals) == 2
-        and len(ligands_list(formula)) - count_bridging_ligands(formula) == 0
+        and len(parse_ligands(formula)[0]) - count_bridging_ligands(formula) == 0
     ):  # If there is only bridging ligands we use the first set of prefixes
         name += coeff_name1[2]
 
@@ -652,7 +639,7 @@ class StabilityEngine:
             raise ValueError("No metal found")
 
         self.metal = metals[0]
-        self.ligands = ligands_list(self.formula)
+        self.ligands = parse_ligands(self.formula)[0]
 
         self.cn = len(self.ligands)
         self.electrons = electron_count(self.formula)
@@ -914,10 +901,10 @@ def isomers(formula):
         key += "M"
     else:
         key += "M2"
-    for n in range(len(data[1])):
-        number.append(int(data[1][n]))
+    for n in range(len(data[2])):
+        number.append(int(data[2][n]))
     number.sort(reverse=True)
-    for n in range(len(data[1])):
+    for n in range(len(data[2])):
         letter = alphabet[n]
         key += letter + str(number[n])
 
@@ -1032,7 +1019,7 @@ def analyse_compound(formula, formula_counter_ions=None):
     lines.append(f"**Stability index** : {result.total}/100")
 
     # Geometry
-    if len(ligands_list(formula)) < 6:
+    if len(parse_ligands(formula)[0]) < 6:
         geometry = get_geometry(formula)[1].capitalize()
         lines.append(f"**Probable geometry** : {geometry}")
 
@@ -1133,7 +1120,7 @@ def square_planar(r):
 
 
 def get_geometry(formula, r=0):
-    cn = len(ligands_list(formula))
+    cn = len(parse_ligands(formula)[0])
     if cn == 1:
         return [(r, 0, 0)], "linear"
     elif cn == 2:
@@ -1254,7 +1241,7 @@ def atoms_position(
     nb_of_atoms = 0
     position = [(0, 0, 0)]
     big_array = get_geometry(formula, r)[0]
-    ligand_list = ligands_list(formula)
+    ligand_list = parse_ligands(formula)[0]
     for i, ligand in enumerate(ligand_list):
         if get_geometry_ligand(ligand) == "sphere":
             nb_of_atoms += 1
@@ -1304,7 +1291,7 @@ def atom_symbols(formula):
     metal = parse_metal(formula)
     atoms_list = metal
 
-    ligand_list = ligands_list(formula)
+    ligand_list = parse_ligands(formula)[0]
     for ligand in ligand_list:
         atoms_list += get_atoms(ligand)
     return atoms_list
@@ -1354,8 +1341,8 @@ def render_complex(compound, atoms_size=0.4, render_type="Ball and Stick"):
     else:
         return view.show()  # Notebook
 
+
 def lowspin(nb_electrons):
-    
     # calculations of the repartition of the electrons in the orbitals for low spin
 
     # Low spin is the repartition of the electrons in the orbitals with the lowest energy (t2g) forming pairs in these and then filling the higher energy orbitals (eg), which leads to more paired electrons and a lower total spin.
@@ -1366,8 +1353,8 @@ def lowspin(nb_electrons):
 
     return nb_pair, nb_free
 
+
 def highspin(nb_electrons):
-    
     # calculations of the repartition of the electrons in the orbitals for high spin
 
     # High spin is the repartition of the electrons in the orbitals with the highest energy (eg) before forming pairs in the lower energy orbitals (t2g), which leads to more unpaired electrons and a higher total spin.
@@ -1387,40 +1374,42 @@ def highspin(nb_electrons):
 
     return nb_pair, nb_free
 
+
 def find_type_spin(nb_electrons):
     # on cherche si c'est high spin ou low spin ( DUR, ligand field theory or metal configuration and position in the periodic table) )
     return lowspin(nb_electrons)
-    #todo
+    # todo
     # return highspin(nb_electrons)
 
-def Fill_orbitals(p,s):
-    result = [0,0,0,0,0] # 3 first = low energy, 2 last = high energy
 
+def Fill_orbitals(p, s):
+    result = [0, 0, 0, 0, 0]  # 3 first = low energy, 2 last = high energy
 
     for i in range(len(result)):
         if p > 0:
             result[i] += 2
-            p-=1
+            p -= 1
         else:
-            if s > 0 :
+            if s > 0:
                 result[i] += 1
-                s-=1
+                s -= 1
 
     return result
+
+
 def Jahn_Teller_distorsion(orbitals):
-    #uneven filing of the the t2g or eg orbitals leads to a Jahn-Teller distorsion
+    # uneven filing of the the t2g or eg orbitals leads to a Jahn-Teller distorsion
     for i in range(2):
-        if orbitals[i] != orbitals[i+1]:
+        if orbitals[i] != orbitals[i + 1]:
             return "Weak Jahn-Teller distorsion"
-    for i in range(3,4):
-        if orbitals[i] != orbitals[i+1]:
+    for i in range(3, 4):
+        if orbitals[i] != orbitals[i + 1]:
             return "Strong Jahn-Teller distorsion"
     return "No Jahn-Teller distorsion"
 
 
-
 nb_elec = 8
 p, s = highspin(nb_elec)
-print("p:",p,"s:",s)
-print(Fill_orbitals(p,s))
-print(Jahn_Teller_distorsion(Fill_orbitals(p,s)))
+print("p:", p, "s:", s)
+print(Fill_orbitals(p, s))
+print(Jahn_Teller_distorsion(Fill_orbitals(p, s)))
