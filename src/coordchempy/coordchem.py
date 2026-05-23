@@ -1433,7 +1433,7 @@ def get_geometry_ligand(ligand_input):
 def atoms_position(
     formula, r=1.7
 ):  # The bond length is set to 1.7 A as py3Dmol can create automatically each bond using this value
-    nb_of_atoms = 0
+    nb_of_atoms = 1
     position = [(0, 0, 0)]
     big_array = get_geometry(formula, r)[0]
     ligand_list = parse_ligands(formula)[0]
@@ -1473,8 +1473,9 @@ def get_atoms(ligand_input):
         match = re.match(r"([A-Z][a-z]?)(\d*)", atom)
         symbol = match.group(1)
         count = int(match.group(2)) if match.group(2) else 1
-
         if symbol == donor_atom[0]:
+            if count > 1:
+                result.extend([symbol] * (count - 1))
             continue
         else:
             result.extend([symbol] * count)
