@@ -20,7 +20,7 @@ TESTS = [
     (
         "[Pt(NH3)2(Cl)2]",
         [
-            "diamminedichloroplatinum(II)",
+            "Diamminedichloroplatinum(II)",
             "Pt (2+)",
             "6s0 5d8",
             "16",

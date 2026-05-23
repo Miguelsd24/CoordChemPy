@@ -916,6 +916,185 @@ def isomers(formula):
 
 
 # ==========================================
+# LOW SPIN HIGH SPIN
+# ==========================================
+
+
+def lowspin(nb_electrons):
+    # calculations of the repartition of the electrons in the orbitals for low spin
+
+    # Low spin is the repartition of the electrons in the orbitals with the lowest energy (t2g) forming pairs in these and then filling the higher energy orbitals (eg), which leads to more paired electrons and a lower total spin.
+    # 5 orbitals (_ _ _ lowest   _ _ highest energy) adding order : the three lower, the two higher
+
+    nb_pair = nb_electrons % 2
+    nb_free = nb_electrons - nb_pair * 2
+
+    return nb_pair, nb_free
+
+
+def highspin(nb_electrons):
+    # calculations of the repartition of the electrons in the orbitals for high spin
+
+    # High spin is the repartition of the electrons in the orbitals with the highest energy (eg) before forming pairs in the lower energy orbitals (t2g), which leads to more unpaired electrons and a higher total spin.
+    # 5 orbitals (_ _ _ lowest   _ _ highest energy) adding order : the three lower, the two higher
+
+    nb_pair = 0
+    nb_free = 0
+
+    if nb_electrons <= 5:
+        nb_free = nb_electrons
+        nb_pair = 0
+    else:
+        electrons_remaining = nb_electrons - 5
+
+        nb_free = 5 - electrons_remaining
+        nb_pair = electrons_remaining
+
+    return nb_pair, nb_free
+
+
+def ligand_field_score(formula):
+    # We calculate the ligand field strength score of the compound, which is based on the ligand field strength of the metal at its current oxidation state and the average spectrochemical field strength of the ligands. The score is normalized to be between 0 and 10.
+    metal_sym = parse_metal(formula)[0]
+    m_data = data_metals[metal_sym]
+    charge = metal_charge(formula)
+
+    # Metal ligand-field strength at the current oxidation state
+    ox_key = str(charge) + "+" if charge > 0 else str(charge)
+    ox_states = m_data.get("oxidation_states", {})
+
+    if ox_key in ox_states:
+        metal_lfs = ox_states[ox_key].get(
+            "ligand_field_strength", m_data["HSAB"]["ligand_field_strength"]
+        )
+
+    else:
+        metal_lfs = m_data["HSAB"]["ligand_field_strength"]
+
+    # Average spectrochemical field strength of the ligands
+
+    ligand_keys = parse_ligands(formula)[0]
+
+    avg_lig_fs = sum(
+        data_ligands[lig.replace("m-", "")].get("field_strength", {}).get("value", 5.0)
+        for lig in ligand_keys
+    ) / len(ligand_keys)
+    # value of 5.0 is used as a default if the ligand is not in the data_ligands or if it does not have a specified field strength to not bias the mean value.
+
+    score = (metal_lfs + avg_lig_fs) / 2
+
+    return score
+
+
+THRESHOLD_HS = 6.1  # score below this → high spin
+THRESHOLD_LS = 6.4  # score above this → low spin
+ROW_THRESHOLD_OFFSET = {
+    4: 0.0,
+    5: -1.0,
+    6: -1.5,
+}  # 4d and 5d metals are more likely to be low spin than 3d metals, so we adjust the thresholds for these periods to reflect this trend. The offset values are determined based on empirical data.
+
+
+def find_type_spin(formula):
+    if get_geometry(formula)[1] != "octahedral":
+        return "not octahedral"
+
+    d_electrons = oxidation_state(formula)[0]
+    metal_symbol = parse_metal(formula)[0]
+    period = data_metals[metal_symbol]["period"]
+
+    # d0, d10: HS/LS distinction is meaningless
+
+    if d_electrons in [0, 10]:
+        spin_type = "not applicable"
+
+        return spin_type
+
+    # d9 has the same filling for HS and LS so it doesn't make sense to distinguish them, we can just say it's high spin.
+    if d_electrons == 9:
+        spin_type = "high spin"
+
+        return spin_type
+
+    # d1, d2, d3: always high spin
+
+    if d_electrons in [1, 2, 3]:
+        spin_type = "high spin"
+
+        return spin_type
+
+    # d4 to d8: score-based decision
+
+    score = ligand_field_score(formula)
+
+    # Adjust thresholds for the metal's period (4d/5d split more → easier LS)
+
+    offset = ROW_THRESHOLD_OFFSET.get(period, 0.0)
+    threshold_hs = THRESHOLD_HS + offset
+    threshold_ls = THRESHOLD_LS + offset
+
+    # Spin preference in the data if there is an ambiguous score.
+
+    low_spin_possible = (
+        data_metals[metal_symbol]
+        .get("spin_preference", {})
+        .get("low_spin_possible", True)
+    )
+    # .get(..,true) in the case where the metal data does not specify a spin preference, we assume that low spin is possible.
+    if score > threshold_ls:
+        spin_type = "low spin"
+    elif score < threshold_hs:
+        spin_type = "high spin"
+    else:
+        spin_type = "high spin" if not low_spin_possible else "ambiguous"
+
+    return spin_type
+
+
+def Fill_orbitals(spin_type, nb_electrons):
+    orbitals = [0, 0, 0, 0, 0]  # 3 first = low energy, 2 last = high energy
+    if spin_type == "not applicable":
+        p, s = highspin(nb_electrons)
+    elif spin_type == "not octahedral":
+        return "not octahedral"
+    elif spin_type == "ambiguous":
+        return "ambiguous"
+    elif spin_type == "high spin":
+        p, s = highspin(nb_electrons)
+    else:
+        p, s = lowspin(nb_electrons)
+
+    for i in range(len(orbitals)):
+        if p > 0:
+            orbitals[i] += 2
+            p -= 1
+        else:
+            if s > 0:
+                orbitals[i] += 1
+                s -= 1
+
+    return orbitals
+
+
+def Jahn_Teller_distorsion(formula):
+    orbitals = Fill_orbitals(find_type_spin(formula), oxidation_state(formula)[0])
+    # uneven filing of the the t2g or eg orbitals leads to a Jahn-Teller distorsion, t2g (0,1,2) => weak distorsion, eg (3,4) => strong distorsion
+    if orbitals == "not octahedral":
+        return "The Jahn Teller distortion analysis only works for octahedral complexes"
+    elif orbitals == "ambiguous":
+        return "The Jahn Teller distortion is unknown for this compound"
+    elif get_geometry(formula)[1] == "octahedral":
+        for i in range(2):
+            if orbitals[i] != orbitals[i + 1]:
+                return "Weak Jahn-Teller distorsion"
+    for i in range(3, 4):
+        if orbitals[i] != orbitals[i + 1]:
+            return "Strong Jahn-Teller distorsion"
+
+    return "No Jahn-Teller distorsion"
+
+
+# ==========================================
 # COMPOUND ANALYSIS AND DISPLAY SECTION
 # ==========================================
 
@@ -1037,6 +1216,10 @@ def analyse_compound(formula, formula_counter_ions=None):
 
     if remark1 != "" or remark2 != "":
         lines.append(f"**Remarks:** {remark1} {remark2}")
+
+    # Jahn teller
+    dist = Jahn_Teller_distorsion(formula)
+    lines.append(f"**Jahn-Teller distortion** : {dist}")
     return render_analysis(lines)
 
 
@@ -1355,181 +1538,3 @@ def render_complex(formula, atoms_size=0.4, render_type="Ball and Stick"):
         return html_content
     else:
         return view.show()  # Notebook
-
-
-# ==========================================
-# LOW SPIN HIGH SPIN
-# ==========================================
-
-
-def lowspin(nb_electrons):
-    # calculations of the repartition of the electrons in the orbitals for low spin
-
-    # Low spin is the repartition of the electrons in the orbitals with the lowest energy (t2g) forming pairs in these and then filling the higher energy orbitals (eg), which leads to more paired electrons and a lower total spin.
-    # 5 orbitals (_ _ _ lowest   _ _ highest energy) adding order : the three lower, the two higher
-
-    nb_pair = nb_electrons % 2
-    nb_free = nb_electrons - nb_pair * 2
-
-    return nb_pair, nb_free
-
-
-def highspin(nb_electrons):
-    # calculations of the repartition of the electrons in the orbitals for high spin
-
-    # High spin is the repartition of the electrons in the orbitals with the highest energy (eg) before forming pairs in the lower energy orbitals (t2g), which leads to more unpaired electrons and a higher total spin.
-    # 5 orbitals (_ _ _ lowest   _ _ highest energy) adding order : the three lower, the two higher
-
-    nb_pair = 0
-    nb_free = 0
-
-    if nb_electrons <= 5:
-        nb_free = nb_electrons
-        nb_pair = 0
-    else:
-        electrons_remaining = nb_electrons - 5
-
-        nb_free = 5 - electrons_remaining
-        nb_pair = electrons_remaining
-
-    return nb_pair, nb_free
-
-def ligand_field_score(formula):
-# We calculate the ligand field strength score of the compound, which is based on the ligand field strength of the metal at its current oxidation state and the average spectrochemical field strength of the ligands. The score is normalized to be between 0 and 10.
-    metal_sym = parse_metal(formula)[0]
-    m_data    = data_metals[metal_sym]
-    charge    = metal_charge(formula)
-
-    # Metal ligand-field strength at the current oxidation state
-    ox_key    = str(charge) + "+" if charge > 0 else str(charge)
-    ox_states = m_data.get("oxidation_states", {})
-
-    if ox_key in ox_states:
-
-        metal_lfs = ox_states[ox_key].get("ligand_field_strength",m_data["HSAB"]["ligand_field_strength"])
-   
-    else:
-        metal_lfs = m_data["HSAB"]["ligand_field_strength"]
-    
-    # Average spectrochemical field strength of the ligands
-
-    ligand_keys = parse_ligands(formula)[0]
-
-    avg_lig_fs  = sum(data_ligands[lig.replace("m-", "")] .get("field_strength", {}).get("value", 5.0) for lig in ligand_keys) / len(ligand_keys)
-    # value of 5.0 is used as a default if the ligand is not in the data_ligands or if it does not have a specified field strength to not bias the mean value.
-
-    score = (metal_lfs + avg_lig_fs) / 2
-
-    return score
-
-
-THRESHOLD_HS = 6.1   # score below this → high spin
-THRESHOLD_LS = 6.4  # score above this → low spin
-ROW_THRESHOLD_OFFSET = {4: 0.0, 5: -1.0, 6: -1.5} # 4d and 5d metals are more likely to be low spin than 3d metals, so we adjust the thresholds for these periods to reflect this trend. The offset values are determined based on empirical data.
-
-def find_type_spin(formula):
-    if get_geometry(formula)[1] != "octahedral":
-        return "not octahedral"
-
-
-    d_electrons = oxidation_state(formula)[0]
-    metal_symbol   = parse_metal(formula)[0]
-    period      = data_metals[metal_symbol]["period"]
-
-    # d0, d10: HS/LS distinction is meaningless
-
-    if d_electrons in [0, 10]:
-        spin_type  = "not applicable"
-
-        return spin_type
-
-    #d9 has the same filling for HS and LS so it doesn't make sense to distinguish them, we can just say it's high spin.
-    if d_electrons == 9:
-        spin_type  = "high spin" 
-        
-        return spin_type
-    
-    # d1, d2, d3: always high spin 
-
-    if d_electrons in [1, 2, 3]:
-        spin_type  = "high spin"
-
-        return spin_type
-
-    # d4 to d8: score-based decision 
-
-    score = ligand_field_score(formula)
-
-    # Adjust thresholds for the metal's period (4d/5d split more → easier LS)
-
-    offset   = ROW_THRESHOLD_OFFSET.get(period, 0.0)
-    threshold_hs   = THRESHOLD_HS + offset
-    threshold_ls   = THRESHOLD_LS + offset
-
-    # Spin preference in the data if there is an ambiguous score.
-
-    low_spin_possible = data_metals[metal_symbol].get( "spin_preference", {}).get("low_spin_possible", True)
-    #.get(..,true) in the case where the metal data does not specify a spin preference, we assume that low spin is possible.
-    if score > threshold_ls:
-        spin_type = "low spin"
-    elif score < threshold_hs:
-        spin_type = "high spin"
-    else:
-        spin_type = "high spin" if not low_spin_possible else "ambiguous"
-
-    return spin_type
-    
-
-
-def Fill_orbitals(spin_type, nb_electrons):
-    orbitals = [0, 0, 0, 0, 0]  # 3 first = low energy, 2 last = high energy
-    if spin_type == "not applicable":
-        p, s = highspin(nb_electrons)
-    elif spin_type == "not octahedral":
-        return False
-    elif spin_type == "ambiguous":
-        return False
-    elif spin_type == "high spin":
-        p, s = highspin(nb_electrons)
-    else:
-        p, s = lowspin(nb_electrons)
-
-
-    for i in range(len(orbitals)):
-        if p > 0:
-            orbitals[i] += 2
-            p -= 1
-        else:
-            if s > 0:
-                orbitals[i] += 1
-                s -= 1
-
-    return orbitals
-
-
-def Jahn_Teller_distorsion(formula, orbitals):
-    # uneven filing of the the t2g or eg orbitals leads to a Jahn-Teller distorsion, t2g (0,1,2) => weak distorsion, eg (3,4) => strong distorsion
-    if orbitals == False:
-        
-        return "The Jahn-Teller distorsion is not relevant for this compound"
-    elif get_geometry(formula)[1] == "octahedral":
-        for i in range(2):
-            if orbitals[i] != orbitals[i + 1]:
-             
-             return "Weak Jahn-Teller distorsion"
-    for i in range(3, 4):
-        if orbitals[i] != orbitals[i + 1]:
-            
-            return "Strong Jahn-Teller distorsion"
-        
-    return "No Jahn-Teller distorsion"
-
-
-mol = " [Co(Cl)4]2-"
-nb_electrons = oxidation_state(mol)[0]
-spin_type = find_type_spin(mol)
-
-print(Jahn_Teller_distorsion(mol, Fill_orbitals(spin_type, nb_electrons)))
-
-
-print(analyse_compound("[Co(NH3)5(Cl)]2+"))
