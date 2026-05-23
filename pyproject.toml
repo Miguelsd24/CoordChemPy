@@ -21,6 +21,12 @@ dependencies = [
     "streamlit",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "ruff",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/Miguelsd24/ppchem"
 
