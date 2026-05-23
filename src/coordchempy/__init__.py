@@ -1,11 +1,13 @@
 # __init__.py
 
 from coordchempy.coordchem import (
+    Jahn_Teller_distorsion,
     StabilityEngine,
     StabilityResult,
     analyse_compound,
     electron_count,
     electronic_structure,
+    find_type_spin,
     formula_verif_and_parsing,
     get_clean_formula,
     get_geometry,
@@ -36,4 +38,6 @@ __all__ = [
     "parse_ligands",
     "parse_metal",
     "parse_counter_ions",
+    "Jahn_Teller_distorsion",
+    "find_type_spin",
 ]
