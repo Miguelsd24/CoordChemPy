@@ -15,15 +15,13 @@ import py3Dmol
 import roman
 from ase import Atoms
 from ase.io import write
-from IPython import get_ipython
-from IPython.display import Markdown, display
 
 # ==========================================
 # LOADING DATA (JSON)
 # ==========================================
 
 # Importing the ligands and metals data from the json files
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 with open(BASE_DIR / "data" / "metals.json") as f:
     data_metals = json.load(f)
@@ -1056,6 +1054,8 @@ def render_analysis(lines):
 
     # Check Notebook
     try:
+        from IPython import get_ipython
+
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell":
             is_notebook = True
@@ -1064,6 +1064,8 @@ def render_analysis(lines):
 
     # Render depending on the interface
     if is_notebook:
+        from IPython.display import Markdown, display
+
         markdown_text = "\n".join(f"* {line}" for line in lines)
         return display(Markdown(markdown_text))
 
