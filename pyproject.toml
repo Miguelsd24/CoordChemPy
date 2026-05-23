@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CoordChemPy"
+version = "0.1.0"
+description = "The essential Python toolkit for inorganic chemistry students and researchers."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "Miguel Sousa", email = "miguel.sousaduarte@epfl.ch" }
+]
+license = { text = "MIT" }
+
+dependencies = [
+    "numpy",
+    "py3Dmol",
+    "roman",
+    "ase",
+    "streamlit",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "ruff",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Miguelsd24/ppchem"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+coordchempy = ["data/*.json"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

@@ -1,0 +1,871 @@
+{
+  "Sc": {
+    "symbol": "sc",
+    "name": "scandium",
+    "secondary_name": "scandate",
+    "preferred_geometry": "octahedral",
+    "group": 3,
+    "period": 4,
+    "possible_ox_state": [0,1,2,3],
+
+    "HSAB": {
+      "base_hardness": 8.2,
+      "effective_hardness": 8.5,
+      "polarizability": 2.5,
+      "ligand_field_strength": 2.0,
+      "pi_acceptor_affinity": 1.0
+    },
+
+    "electronic_config": "d1",
+    "redox_flexibility": 2.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "2+": {
+        "effective_hardness": 8.0,
+        "ligand_field_strength": 1.8,
+        "geometry_bias": ["octahedral", "distorted"],
+        "stability_note": "rare"
+      },
+      "3+": {
+        "effective_hardness": 8.5,
+        "ligand_field_strength": 2.0,
+        "geometry_bias": ["octahedral"],
+        "stability_note": "most stable"
+      }
+    }
+  },
+  "Ti": {
+    "symbol": "ti",
+    "name": "titanium",
+    "secondary_name": "titanate",
+    "preferred_geometry": "octahedral",
+    "group": 4,
+    "period": 4,
+    "possible_ox_state": [-2,-1,0,1,2,3,4],
+    "HSAB": {
+      "base_hardness": 7.6,
+      "effective_hardness": 7.8,
+      "polarizability": 3.0,
+      "ligand_field_strength": 3.0,
+      "pi_acceptor_affinity": 1.5
+    },
+
+    "electronic_config": "d2",
+    "redox_flexibility": 3.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 7.2, "ligand_field_strength": 2.8, "geometry_bias": ["octahedral"], "stability_note": "moderate" },
+      "3+": { "effective_hardness": 7.8, "ligand_field_strength": 3.0, "geometry_bias": ["octahedral"], "stability_note": "stable" }
+    }
+  },
+
+  "V": {
+    "symbol": "v",
+    "name": "vanadium",
+    "secondary_name": "vanadate",
+    "preferred_geometry": "octahedral",
+    "group": 5,
+    "period": 4,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
+    "HSAB": {
+      "base_hardness": 7.2,
+      "effective_hardness": 7.3,
+      "polarizability": 3.3,
+      "ligand_field_strength": 3.5,
+      "pi_acceptor_affinity": 2.0
+    },
+
+    "electronic_config": "d3",
+    "redox_flexibility": 5.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 6.8, "ligand_field_strength": 3.2, "geometry_bias": ["octahedral"], "stability_note": "less common" },
+      "3+": { "effective_hardness": 7.2, "ligand_field_strength": 3.5, "geometry_bias": ["octahedral"], "stability_note": "common" }
+    }
+  },
+
+  "Cr": {
+    "symbol": "cr",
+    "name": "chromium",
+    "secondary_name": "chromate",
+    "preferred_geometry": "octahedral",
+    "group": 6,
+    "period": 4,
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 6.9,
+      "effective_hardness": 6.8,
+      "polarizability": 3.6,
+      "ligand_field_strength": 5.0,
+      "pi_acceptor_affinity": 3.5
+    },
+
+    "electronic_config": "d4",
+    "redox_flexibility": 6.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 6.5, "ligand_field_strength": 4.5, "geometry_bias": ["octahedral"], "stability_note": "reducing conditions" },
+      "3+": { "effective_hardness": 6.8, "ligand_field_strength": 5.0, "geometry_bias": ["octahedral"], "stability_note": "stable" }
+    }
+  },
+
+  "Mn": {
+    "symbol": "mn",
+    "name": "manganese",
+    "secondary_name": "manganate",
+    "preferred_geometry": "octahedral",
+    "group": 7,
+    "period": 4,
+    "possible_ox_state": [-3,-2,-1,0,1,2,3,4,5,6,7],
+    "HSAB": {
+      "base_hardness": 6.7,
+      "effective_hardness": 6.5,
+      "polarizability": 3.9,
+      "ligand_field_strength": 4.5,
+      "pi_acceptor_affinity": 4.0
+    },
+
+    "electronic_config": "d5",
+    "redox_flexibility": 7.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 6.3, "ligand_field_strength": 4.2, "geometry_bias": ["octahedral"], "stability_note": "very common" },
+      "3+": { "effective_hardness": 6.5, "ligand_field_strength": 4.5, "geometry_bias": ["octahedral"], "stability_note": "biological relevance" }
+    }
+  },
+
+  "Fe": {
+    "symbol": "fe",
+    "name": "iron",
+    "secondary_name": "ferrate",
+    "preferred_geometry": "octahedral",
+    "group": 8,
+    "period": 4,
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 6.5,
+      "effective_hardness": 6.2,
+      "polarizability": 4.0,
+      "ligand_field_strength": 6.0,
+      "pi_acceptor_affinity": 5.0
+    },
+
+    "electronic_config": "d6",
+    "redox_flexibility": 6.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 6.0, "ligand_field_strength": 5.8, "geometry_bias": ["octahedral"], "stability_note": "biological key state" },
+      "3+": { "effective_hardness": 6.2, "ligand_field_strength": 6.0, "geometry_bias": ["octahedral"], "stability_note": "very stable" }
+    }
+  },
+
+  "Co": {
+    "symbol": "co",
+    "name": "cobalt",
+    "secondary_name": "cobaltate",
+    "preferred_geometry": "octahedral",
+    "group": 9,
+    "period": 4,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
+    "HSAB": {
+      "base_hardness": 6.3,
+      "effective_hardness": 5.8,
+      "polarizability": 4.2,
+      "ligand_field_strength": 7.0,
+      "pi_acceptor_affinity": 6.0
+    },
+
+    "electronic_config": "d7",
+    "redox_flexibility": 6.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 5.6, "ligand_field_strength": 6.5, "geometry_bias": ["octahedral", "tetrahedral"], "stability_note": "very common" },
+      "3+": { "effective_hardness": 5.8, "ligand_field_strength": 7.0, "geometry_bias": ["octahedral"], "stability_note": "oxidizing conditions" }
+    }
+  },
+
+  "Ni": {
+    "symbol": "ni",
+    "name": "nickel",
+    "secondary_name": "nickelate",
+    "preferred_geometry": "octahedral",
+    "group": 10,
+    "period": 4,
+    "possible_ox_state": [-2,-1,0,1,2,3,4],
+    "HSAB": {
+      "base_hardness": 6.1,
+      "effective_hardness": 5.5,
+      "polarizability": 4.5,
+      "ligand_field_strength": 7.5,
+      "pi_acceptor_affinity": 6.5
+    },
+
+    "electronic_config": "d8",
+    "redox_flexibility": 5.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 5.3, "ligand_field_strength": 7.2, "geometry_bias": ["octahedral", "square_planar"], "stability_note": "most common" },
+      "3+": { "effective_hardness": 5.6, "ligand_field_strength": 7.8, "geometry_bias": ["octahedral"], "stability_note": "rare strong ligands" }
+    }
+  },
+
+  "Cu": {
+    "symbol": "cu",
+    "name": "copper",
+    "secondary_name": "cuprate",
+    "preferred_geometry": "square_planar",
+    "group": 11,
+    "period": 4,
+    "possible_ox_state": [-2,0,1,2,3,4],
+    "HSAB": {
+      "base_hardness": 5.2,
+      "effective_hardness": 4.8,
+      "polarizability": 6.2,
+      "ligand_field_strength": 6.8,
+      "pi_acceptor_affinity": 7.0
+    },
+
+    "electronic_config": "d9",
+    "redox_flexibility": 7.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "1+": "larger", "2+": "smaller" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "1+": { "effective_hardness": 4.6, "ligand_field_strength": 5.0, "geometry_bias": ["linear", "tetrahedral"], "stability_note": "soft ligands" },
+      "2+": { "effective_hardness": 4.8, "ligand_field_strength": 6.8, "geometry_bias": ["square_planar", "distorted"], "stability_note": "most stable" }
+    }
+  },
+
+  "Zn": {
+    "symbol": "zn",
+    "name": "zinc",
+    "secondary_name": "zincate",
+    "preferred_geometry": "tetrahedral",
+    "group": 12,
+    "period": 4,
+    "possible_ox_state": [-2,0,1,2],
+    "HSAB": {
+      "base_hardness": 7.9,
+      "effective_hardness": 7.8,
+      "polarizability": 3.0,
+      "ligand_field_strength": 1.5,
+      "pi_acceptor_affinity": 0.5
+    },
+
+    "electronic_config": "d10",
+    "redox_flexibility": 1.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "reference" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 7.8, "ligand_field_strength": 1.5, "geometry_bias": ["tetrahedral"], "stability_note": "only relevant state" }
+    }
+  },
+
+  "Y": {
+    "symbol": "y",
+    "name": "yttrium",
+    "secondary_name": "yttrate",
+    "preferred_geometry": "octahedral",
+    "group": 3,
+    "period": 5,
+    "possible_ox_state": [0,1,2,3],
+    "HSAB": {
+      "base_hardness": 8.0,
+      "effective_hardness": 8.3,
+      "polarizability": 2.8,
+      "ligand_field_strength": 2.2,
+      "pi_acceptor_affinity": 1.0
+    },
+
+    "electronic_config": "d1",
+    "redox_flexibility": 2.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "3+": { "effective_hardness": 8.3, "ligand_field_strength": 2.2, "geometry_bias": ["octahedral"], "stability_note": "stable trivalent" }
+    }
+  },
+
+  "Zr": {
+    "symbol": "zr",
+    "name": "zirconium",
+    "secondary_name": "zirconate",
+    "preferred_geometry": "octahedral",
+    "group": 4,
+    "period": 5,
+    "possible_ox_state": [-2,0,1,2,3,4],
+    "HSAB": {
+      "base_hardness": 7.5,
+      "effective_hardness": 7.7,
+      "polarizability": 3.2,
+      "ligand_field_strength": 3.2,
+      "pi_acceptor_affinity": 1.5
+    },
+
+    "electronic_config": "d2",
+    "redox_flexibility": 3.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "3+": "smaller", "4+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "4+": { "effective_hardness": 7.7, "ligand_field_strength": 3.2, "geometry_bias": ["octahedral"], "stability_note": "dominant state" }
+    }
+  },
+
+  "Nb": {
+    "symbol": "nb",
+    "name": "niobium",
+    "secondary_name": "niobate",
+    "preferred_geometry": "octahedral",
+    "group": 5,
+    "period": 5,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
+    "HSAB": {
+      "base_hardness": 7.0,
+      "effective_hardness": 7.1,
+      "polarizability": 3.8,
+      "ligand_field_strength": 3.8,
+      "pi_acceptor_affinity": 2.0
+    },
+
+    "electronic_config": "d3",
+    "redox_flexibility": 5.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "5+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "5+": { "effective_hardness": 7.1, "ligand_field_strength": 3.8, "geometry_bias": ["octahedral"], "stability_note": "most stable" }
+    }
+  },
+
+  "Mo": {
+    "symbol": "mo",
+    "name": "molybdenum",
+    "secondary_name": "molybdate",
+    "preferred_geometry": "octahedral",
+    "group": 6,
+    "period": 5,
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 6.6,
+      "effective_hardness": 6.4,
+      "polarizability": 4.2,
+      "ligand_field_strength": 5.0,
+      "pi_acceptor_affinity": 3.5
+    },
+
+    "electronic_config": "d4",
+    "redox_flexibility": 6.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "6+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "6+": { "effective_hardness": 6.4, "ligand_field_strength": 5.0, "geometry_bias": ["octahedral"], "stability_note": "oxo-stable" }
+    }
+  },
+
+  "Tc": {
+    "symbol": "tc",
+    "name": "technetium",
+    "secondary_name": "technetate",
+    "preferred_geometry": "octahedral",
+    "group": 7,
+    "period": 5,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6,7],
+    "HSAB": {
+      "base_hardness": 6.4,
+      "effective_hardness": 6.1,
+      "polarizability": 4.5,
+      "ligand_field_strength": 5.8,
+      "pi_acceptor_affinity": 4.5
+    },
+
+    "electronic_config": "d5",
+    "redox_flexibility": 7.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "7+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "7+": { "effective_hardness": 6.1, "ligand_field_strength": 5.8, "geometry_bias": ["tetrahedral", "octahedral"], "stability_note": "oxo species stable" }
+    }
+  },
+
+  "Ru": {
+    "symbol": "ru",
+    "name": "ruthenium",
+    "secondary_name": "ruthenate",
+    "preferred_geometry": "octahedral",
+    "group": 8,
+    "period": 5,
+    "possible_ox_state": [-4,-2,0,1,2,3,4,5,6,7,8],
+    "HSAB": {
+      "base_hardness": 6.2,
+      "effective_hardness": 5.8,
+      "polarizability": 5.0,
+      "ligand_field_strength": 6.8,
+      "pi_acceptor_affinity": 6.0
+    },
+
+    "electronic_config": "d6",
+    "redox_flexibility": 6.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "larger", "4+": "smaller" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 5.6, "ligand_field_strength": 6.5, "geometry_bias": ["octahedral"], "stability_note": "reductive chemistry" },
+      "4+": { "effective_hardness": 5.8, "ligand_field_strength": 6.8, "geometry_bias": ["octahedral"], "stability_note": "stable oxidation chemistry" }
+    }
+  },
+
+  "Rh": {
+    "symbol": "rh",
+    "name": "rhodium",
+    "secondary_name": "rhodate",
+    "preferred_geometry": "octahedral",
+    "group": 9,
+    "period": 5,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 5.8,
+      "effective_hardness": 5.3,
+      "polarizability": 5.5,
+      "ligand_field_strength": 7.5,
+      "pi_acceptor_affinity": 7.0
+    },
+
+    "electronic_config": "d7",
+    "redox_flexibility": 6.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "1+": "larger", "3+": "smaller" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "1+": { "effective_hardness": 5.0, "ligand_field_strength": 6.5, "geometry_bias": ["linear"], "stability_note": "soft ligands" },
+      "3+": { "effective_hardness": 5.3, "ligand_field_strength": 7.5, "geometry_bias": ["octahedral"], "stability_note": "common catalytic state" }
+    }
+  },
+
+  "Pd": {
+    "symbol": "pd",
+    "name": "palladium",
+    "secondary_name": "palladate",
+    "preferred_geometry": "square_planar",
+    "group": 10,
+    "period": 5,
+    "possible_ox_state": [0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 4.8,
+      "effective_hardness": 4.2,
+      "polarizability": 7.8,
+      "ligand_field_strength": 8.5,
+      "pi_acceptor_affinity": 7.8
+    },
+
+    "electronic_config": "d8",
+    "redox_flexibility": 5.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "0": "reference", "2+": "smaller" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "0": { "effective_hardness": 4.0, "ligand_field_strength": 8.0, "geometry_bias": ["linear", "square_planar"], "stability_note": "catalysis key state" },
+      "2+": { "effective_hardness": 4.2, "ligand_field_strength": 8.5, "geometry_bias": ["square_planar"], "stability_note": "dominant state" }
+    }
+  },
+
+  "Ag": {
+    "symbol": "ag",
+    "name": "silver",
+    "secondary_name": "argentate",
+    "preferred_geometry": "linear",
+    "group": 11,
+    "period": 5,
+    "possible_ox_state": [-2,-1,0,1,2,3,4],
+    "HSAB": {
+      "base_hardness": 4.5,
+      "effective_hardness": 4.0,
+      "polarizability": 8.2,
+      "ligand_field_strength": 4.0,
+      "pi_acceptor_affinity": 6.5
+    },
+
+    "electronic_config": "d10",
+    "redox_flexibility": 3.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "1+": "reference" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "1+": { "effective_hardness": 4.0, "ligand_field_strength": 4.0, "geometry_bias": ["linear"], "stability_note": "only relevant" }
+    }
+  },
+
+  "Cd": {
+    "symbol": "cd",
+    "name": "cadmium",
+    "secondary_name": "cadmiate",
+    "preferred_geometry": "tetrahedral",
+    "group": 12,
+    "period": 5,
+    "possible_ox_state": [-2,0,1,2],
+    "HSAB": {
+      "base_hardness": 6.9,
+      "effective_hardness": 6.8,
+      "polarizability": 6.5,
+      "ligand_field_strength": 2.0,
+      "pi_acceptor_affinity": 1.0
+    },
+
+    "electronic_config": "d10",
+    "redox_flexibility": 1.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "2+": "reference" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "2+": { "effective_hardness": 6.8, "ligand_field_strength": 2.0, "geometry_bias": ["tetrahedral"], "stability_note": "only stable state" }
+    }
+  },
+
+  "Hf": {
+    "symbol": "hf",
+    "name": "hafnium",
+    "secondary_name": "hafnate",
+    "preferred_geometry": "octahedral",
+    "group": 4,
+    "period": 6,
+    "possible_ox_state": [-2,0,1,2,3,4],
+    "HSAB": {
+      "base_hardness": 7.6,
+      "effective_hardness": 7.8,
+      "polarizability": 3.0,
+      "ligand_field_strength": 3.4,
+      "pi_acceptor_affinity": 1.5
+    },
+
+    "electronic_config": "d2",
+    "redox_flexibility": 3.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "4+": { "effective_hardness": 7.8, "ligand_field_strength": 3.4, "geometry_bias": ["octahedral"], "stability_note": "dominant" }
+    }
+  },
+
+  "Ta": {
+    "symbol": "ta",
+    "name": "tantalum",
+    "secondary_name": "tantalate",
+    "preferred_geometry": "octahedral",
+    "group": 5,
+    "period": 6,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5],
+    "HSAB": {
+      "base_hardness": 7.1,
+      "effective_hardness": 7.2,
+      "polarizability": 3.5,
+      "ligand_field_strength": 4.0,
+      "pi_acceptor_affinity": 2.0
+    },
+
+    "electronic_config": "d3",
+    "redox_flexibility": 5.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "5+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "5+": { "effective_hardness": 7.2, "ligand_field_strength": 4.0, "geometry_bias": ["octahedral"], "stability_note": "stable high oxidation state" }
+    }
+  },
+
+  "W": {
+    "symbol": "w",
+    "name": "tungsten",
+    "secondary_name": "tungstate",
+    "preferred_geometry": "octahedral",
+    "group": 6,
+    "period": 6,
+    "possible_ox_state": [-4,-2,-1,0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 6.7,
+      "effective_hardness": 6.5,
+      "polarizability": 4.0,
+      "ligand_field_strength": 5.5,
+      "pi_acceptor_affinity": 3.8
+    },
+
+    "electronic_config": "d4",
+    "redox_flexibility": 6.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "6+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "6+": { "effective_hardness": 6.5, "ligand_field_strength": 5.5, "geometry_bias": ["octahedral"], "stability_note": "oxo stable" }
+    }
+  },
+
+  "Re": {
+    "symbol": "re",
+    "name": "rhenium",
+    "secondary_name": "rhenate",
+    "preferred_geometry": "octahedral",
+    "group": 7,
+    "period": 6,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6,7],
+    "HSAB": {
+      "base_hardness": 6.4,
+      "effective_hardness": 6.1,
+      "polarizability": 4.4,
+      "ligand_field_strength": 6.0,
+      "pi_acceptor_affinity": 5.0
+    },
+
+    "electronic_config": "d5",
+    "redox_flexibility": 7.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "7+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "7+": { "effective_hardness": 6.1, "ligand_field_strength": 6.0, "geometry_bias": ["tetrahedral", "octahedral"], "stability_note": "oxo species stable" }
+    }
+  },
+
+  "Os": {
+    "symbol": "os",
+    "name": "osmium",
+    "secondary_name": "osmate",
+    "preferred_geometry": "octahedral",
+    "group": 8,
+    "period": 6,
+    "possible_ox_state": [-4,-2,0,1,2,3,4,5,6,7,8],
+    "HSAB": {
+      "base_hardness": 6.1,
+      "effective_hardness": 5.7,
+      "polarizability": 5.0,
+      "ligand_field_strength": 7.0,
+      "pi_acceptor_affinity": 6.2
+    },
+
+    "electronic_config": "d6",
+    "redox_flexibility": 6.5,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "4+": "smaller", "8+": "reference" },
+    "spin_preference": { "high_spin": true, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "4+": { "effective_hardness": 5.7, "ligand_field_strength": 7.0, "geometry_bias": ["octahedral"], "stability_note": "stable" }
+    }
+  },
+
+  "Ir": {
+    "symbol": "ir",
+    "name": "iridium",
+    "secondary_name": "iridate",
+    "preferred_geometry": "octahedral",
+    "group": 9,
+    "period": 6,
+    "possible_ox_state": [-3,-1,0,1,2,3,4,5,6,7,8,9],
+    "HSAB": {
+      "base_hardness": 5.7,
+      "effective_hardness": 5.2,
+      "polarizability": 5.5,
+      "ligand_field_strength": 8.0,
+      "pi_acceptor_affinity": 7.2
+    },
+
+    "electronic_config": "d7",
+    "redox_flexibility": 6.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "3+": "smaller", "4+": "reference" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "3+": { "effective_hardness": 5.2, "ligand_field_strength": 8.0, "geometry_bias": ["octahedral"], "stability_note": "common" },
+      "4+": { "effective_hardness": 5.4, "ligand_field_strength": 8.2, "geometry_bias": ["octahedral"], "stability_note": "strong field ligands" }
+    }
+  },
+
+  "Pt": {
+    "symbol": "pt",
+    "name": "platinum",
+    "secondary_name": "platinate",
+    "preferred_geometry": "square_planar",
+    "group": 10,
+    "period": 6,
+    "possible_ox_state": [-1,-2,-3,0,1,2,3,4,5,6],
+    "HSAB": {
+      "base_hardness": 4.6,
+      "effective_hardness": 4.0,
+      "polarizability": 8.5,
+      "ligand_field_strength": 9.0,
+      "pi_acceptor_affinity": 8.5
+    },
+
+    "electronic_config": "d8",
+    "redox_flexibility": 5.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "0": "reference", "2+": "smaller", "4+": "smaller" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": true },
+
+    "oxidation_states": {
+      "0": { "effective_hardness": 4.0, "ligand_field_strength": 8.8, "geometry_bias": ["linear"], "stability_note": "catalysis core state" },
+      "2+": { "effective_hardness": 4.0, "ligand_field_strength": 9.0, "geometry_bias": ["square_planar"], "stability_note": "most common" },
+      "4+": { "effective_hardness": 4.2, "ligand_field_strength": 9.2, "geometry_bias": ["octahedral"], "stability_note": "rare strong oxidizer" }
+    }
+  },
+
+  "Au": {
+    "symbol": "au",
+    "name": "gold",
+    "secondary_name": "aurate",
+    "preferred_geometry": "linear",
+    "group": 11,
+    "period": 6,
+    "possible_ox_state": [-3,-2,-1,0,1,2,3,5],
+    "HSAB": {
+      "base_hardness": 4.2,
+      "effective_hardness": 3.8,
+      "polarizability": 9.0,
+      "ligand_field_strength": 5.0,
+      "pi_acceptor_affinity": 7.5
+    },
+
+    "electronic_config": "d10",
+    "redox_flexibility": 4.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "1+": "reference", "3+": "smaller" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "1+": { "effective_hardness": 3.8, "ligand_field_strength": 5.0, "geometry_bias": ["linear"], "stability_note": "soft ligands" },
+      "3+": { "effective_hardness": 4.0, "ligand_field_strength": 5.5, "geometry_bias": ["square_planar"], "stability_note": "rare but important" }
+    }
+  },
+
+  "Hg": {
+    "symbol": "hg",
+    "name": "mercury",
+    "secondary_name": "mercurate",
+    "preferred_geometry": "linear",
+    "group": 12,
+    "period": 6,
+    "possible_ox_state": [-2,0,1,2],
+    "HSAB": {
+      "base_hardness": 5.5,
+      "effective_hardness": 5.2,
+      "polarizability": 8.8,
+      "ligand_field_strength": 3.5,
+      "pi_acceptor_affinity": 5.5
+    },
+
+    "electronic_config": "d10",
+    "redox_flexibility": 2.0,
+
+    "hsab_model": "oxidation_state_adjusted",
+    "charge_dependency": true,
+    "ionic_radius_trend": { "1+": "larger", "2+": "reference" },
+    "spin_preference": { "high_spin": false, "low_spin_possible": false },
+
+    "oxidation_states": {
+      "1+": { "effective_hardness": 5.0, "ligand_field_strength": 3.5, "geometry_bias": ["linear"], "stability_note": "rare" },
+      "2+": { "effective_hardness": 5.2, "ligand_field_strength": 3.5, "geometry_bias": ["linear"], "stability_note": "main state" }
+    }
+  }
+}
