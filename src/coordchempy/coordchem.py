@@ -380,7 +380,7 @@ def electrons_probable_complex(formula):
     elif electron_count(formula) > 22:
         return "This specific coordination complex is highly unstable and structurally unfeasible."
     else:
-        return "This specific coordination complex does not follow the 16 or 18 electron rule, thus, it is probably not very stable. It can however exist."
+        return "This specific coordination complex does not follow the 16 or 18 electron rule."
 
 
 # === Function which calulate the electroni structure of the metal === #
@@ -961,6 +961,15 @@ def chemical_rules(formula):
     # We verify that there is no bridging ligand if there is only one metal center
     if len(parse_metal(formula)) == 1 and count_bridging_ligands(formula) > 0:
         raise ValueError("Error: A mononuclear complex cannot have bridging ligands")
+    # We verify that if there is two metals both are connected
+    if (
+        len(parse_metal(formula)) == 2
+        and count_bridging_ligands(formula) == 0
+        and bond_order(formula) == 0
+    ):
+        raise ValueError(
+            "Error: A binuclear compound must have at least one metal-metal bond or bridging ligand"
+        )
 
 
 # Final function which prints all the relevant information
@@ -1019,7 +1028,7 @@ def analyse_compound(formula, formula_counter_ions=None):
     lines.append(f"**Stability index** : {result.total}/100")
 
     # Geometry
-    if len(parse_ligands(formula)[0]) < 6:
+    if len(parse_ligands(formula)[0]) <= 6:
         geometry = get_geometry(formula)[1].capitalize()
         lines.append(f"**Probable geometry** : {geometry}")
 
