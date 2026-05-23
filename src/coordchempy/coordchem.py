@@ -273,6 +273,7 @@ def parse_elements(formula):
 # ==========================================
 
 
+# === Function which calculates the total charge of the counter ions === #
 def counter_ions_charge(formula_counter_ions):
     counter_ions = parse_counter_ions(formula_counter_ions)[0]
     charge = 0
@@ -381,7 +382,7 @@ def electrons_probable_complex(formula):
         return "This specific coordination complex does not follow the 16 or 18 electron rule."
 
 
-# === Function which calulate the electroni structure of the metal === #
+# === Function which calulate the electronic structure of the metal === #
 def electronic_structure(formula):
     # We set the data needed and we create a list to stock the result
     metals = parse_metal(formula)

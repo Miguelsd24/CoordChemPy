@@ -281,14 +281,16 @@ TESTS = [
             "Geometry": "Octahedral",
         },
     ),
-    "[Co(NCS)4]2-",
-    {
-        "IUPAC": "tetraisothiocyanatocobaltate(II)",
-        "Oxidation": "Co (2+)",
-        "Config": "[Ar] 4s0 3d7",
-        "Electrons": 15,
-        "Geometry": "Tetrahedral",
-    },
+    (
+        "[Co(NCS)4]2-",
+        {
+            "IUPAC": "tetraisothiocyanatocobaltate(II)",
+            "Oxidation": "Co (2+)",
+            "Config": "[Ar] 4s0 3d7",
+            "Electrons": 15,
+            "Geometry": "Tetrahedral",
+        },
+    ),
     (
         "[Hg(SCN)4]2-",
         {
