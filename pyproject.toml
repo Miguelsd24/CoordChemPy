@@ -32,11 +32,14 @@ test = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+# Indique à setuptools d'inclure automatiquement les fichiers non-python trouvés dans package-data
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
+# Associe correctement le dossier data à ton package source 'coordchempy'
 coordchempy = ["data/*.json"]
 
 [tool.ruff]

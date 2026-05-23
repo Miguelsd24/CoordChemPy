@@ -33,5 +33,7 @@ __all__ = [
     "oxidation_state",
     "render_complex",
     "formula_verif_and_parsing",
-    "parse_ligandsparse_metalparse_counter_ions",
+    "parse_ligands",
+    "parse_metal",
+    "parse_counter_ions",
 ]
