@@ -573,10 +573,10 @@ def naming_compound(formula, formula_counter_ions=None):
         if coeff > 0:
             if should_use_the_coeff_name2(ligand_name) is True:
                 # We divide the coefficient by 1 or 2 to take into account the case of symmetric binuclear complexes
-                prefixe_ligand = coeff_name2[coeff / n]
+                prefixe_ligand = coeff_name2[coeff // n]
                 name += f"{prefixe_ligand}({ligand_name})"
             else:
-                prefixe_ligand = coeff_name1[coeff / n]
+                prefixe_ligand = coeff_name1[coeff // n]
                 name += prefixe_ligand + ligand_name
 
     # We add the metal name
