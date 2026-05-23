@@ -1433,3 +1433,6 @@ p, s = highspin(nb_elec)
 print("p:", p, "s:", s)
 print(Fill_orbitals(p, s))
 print(Jahn_Teller_distorsion(Fill_orbitals(p, s)))
+
+
+print(analyse_compound("[Co(NH3)5(Cl)]2+"))
