@@ -21,7 +21,7 @@ from ase.io import write
 # ==========================================
 
 # Importing the ligands and metals data from the json files
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 with open(BASE_DIR / "data" / "metals.json") as f:
     data_metals = json.load(f)
