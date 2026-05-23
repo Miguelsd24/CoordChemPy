@@ -3,8 +3,6 @@ import streamlit.components.v1 as components
 
 import coordchempy as cc
 
-# To start the app, in a terminal run: python -m streamlit run c:/Users/migus/git/ppchem/app/app.py
-
 # Title of the app
 st.title("CoordChemPy", text_alignment="left")
 st.subheader(
@@ -16,14 +14,13 @@ st.subheader(
 st.subheader("Coordination compound information finder")
 
 
-# 1. Initialisation (crucial pour éviter les erreurs de clés manquantes)
+# 1. Initialisation
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
-# Initialisation au début du script
 if "compound_ase" not in st.session_state:
     st.session_state.compound_ase = None
 
-# 2. Les champs de saisie (on utilise des variables simples ici pour le contrôle)
+# 2. Input text
 
 counter_ions = st.text_input(
     "_Enter the counter ion formula following the correct format._",
@@ -37,7 +34,7 @@ coord_compound = st.text_input(
     help="Input format rules are explained in the README.md file",
 )
 
-# 3. Le bouton Analysis (Le seul déclencheur)
+# 3. Analysis button
 if st.button("Analysis"):
     # Vérification : La formule principale ne peut pas être vide
     if not coord_compound:
@@ -85,7 +82,7 @@ with st.form("render_form"):
 if submit:
     if coord_compound:
         try:
-            st.session_state.compound_ase = cc.create_compound_render(coord_compound)
+            st.session_state.compound_ase = coord_compound
         except ValueError as e:
             st.error(str(e))
             st.session_state.analysis_result = None
@@ -97,15 +94,15 @@ if submit:
         st.session_state.compound_ase = None
 
 if st.session_state.compound_ase:
-    view_html = cc.render_complex(
-        st.session_state.compound_ase, atoms_size, render_type
-    )._make_html()
-    components.html(
-        view_html,
-        height=400,
-        width=400,
-    )
-    st.success("Successful render")
+    try:
+        view_html = cc.render_complex(
+            st.session_state.compound_ase, atoms_size, render_type
+        )
+        components.html(view_html, height=400, width=400)
+        st.success("Successful render")
 
+    except ValueError as e:
+        st.error(str(e))
+        st.session_state.compound_ase = None
 
 st.divider()

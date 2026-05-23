@@ -380,7 +380,7 @@
     "charge_density_effective": 1.0
   },
   "NO+": {
-    "name": "nitrosyl(linear)",
+    "name": "nitrosyl",
     "SMILES": "[N+]#O",
     "type": "L",
     "denticity": 1,
@@ -404,7 +404,7 @@
     "charge_density_effective": 1.0
   },
   "NO": {
-    "name": "nitrosyl(bent)",
+    "name": "nitrosyl",
     "SMILES": "[N+]=O",
     "type": "X",
     "denticity": 1,
@@ -831,5 +831,26 @@
   "orbital_type": "carboxylate_oxygen_donor",
   "electronegativity_effective": 3.5,
   "charge_density_effective": 6.0
+  },
+  "C2H4": {
+    "name": "ethene",
+    "abbr": "C2H4",
+    "SMILES": "C=C",
+    "denticity": 1,
+    "charge": 0,
+    "donor_atoms": ["C", "C"],
+    "bridging_e": 0,
+    "donor_e": 2,
+    "type": "L",
+    "HSAB": {
+      "hardness": 4.5,
+      "softness": 5.5,
+      "polarizability": 5.8,
+      "donor_index": 5.2,
+      "pi_backbonding_index": 8.5
+    },
+    "orbital_type": "pi_donor_pi_acceptor",
+    "electronegativity_effective": 2.5,
+    "charge_density_effective": 0.0
   }
 }
