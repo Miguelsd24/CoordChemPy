@@ -1,43 +1,70 @@
-# __init__.py
-
 from coordchempy.coordchem import (
-    Jahn_Teller_distorsion,
+    # Stability
     StabilityEngine,
     StabilityResult,
+    # Reports
     analyse_compound,
+    # Databases
+    bond_order,
+    # Charges
+    complex_charge,
+    create_compound_render,
+    determine_spin_state,
+    # Electronic structure
     electron_count,
     electronic_structure,
-    find_type_spin,
-    formula_verif_and_parsing,
+    export_cif,
+    # Exports
+    export_xyz,
+    formula_verification,
+    # Nomenclature
     get_clean_formula,
+    # Geometry
     get_geometry,
+    jahn_teller_distortion,
+    ligands_charge,
+    magnetic_behavior,
+    magnetic_moment,
     metal_charge,
-    name_ligand,
     naming_compound,
-    oxidation_state,
     parse_counter_ions,
     parse_ligands,
+    # Parsing
     parse_metal,
     render_complex,
 )
 
 __all__ = [
-    "StabilityEngine",
-    "StabilityResult",
-    "analyse_compound",
-    "electron_count",
-    "electronic_structure",
-    "get_clean_formula",
-    "get_geometry",
+    # Charges & Oxidation
+    "complex_charge",
+    "ligands_charge",
     "metal_charge",
-    "name_ligand",
-    "naming_compound",
-    "oxidation_state",
-    "render_complex",
-    "formula_verif_and_parsing",
+    # Databases & Parsing
+    "bond_order",
+    "parse_counter_ions",
     "parse_ligands",
     "parse_metal",
-    "parse_counter_ions",
-    "Jahn_Teller_distorsion",
-    "find_type_spin",
+    # Electronic structure & Properties
+    "determine_spin_state",
+    "electron_count",
+    "electronic_structure",
+    "jahn_teller_distortion",
+    "magnetic_behavior",
+    "magnetic_moment",
+    # Exports
+    "export_cif",
+    "export_xyz",
+    # Geometry & 3D Rendering
+    "create_compound_render",
+    "get_geometry",
+    "render_complex",
+    # Nomenclature
+    "get_clean_formula",
+    "formula_verification",
+    "naming_compound",
+    # Reports
+    "analyse_compound",
+    # Stability
+    "StabilityEngine",
+    "StabilityResult",
 ]
