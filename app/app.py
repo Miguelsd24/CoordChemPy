@@ -3,7 +3,10 @@ import streamlit.components.v1 as components
 
 import coordchempy as cc
 
-# Title of the app
+# ============================================================
+# Title / Subheaders of the app
+# ============================================================
+
 st.title("CoordChemPy", text_alignment="left")
 st.subheader(
     "The best python based tool for coordination chemist!",
@@ -13,14 +16,18 @@ st.subheader(
 #
 st.subheader("Coordination compound information finder")
 
+# ============================================================
+# Initialisation of the session
+# ============================================================
 
-# 1. Initialisation
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
 if "compound_ase" not in st.session_state:
     st.session_state.compound_ase = None
 
-# 2. Input text
+# ============================================================
+# Test input
+# ============================================================
 
 counter_ions = st.text_input(
     "_Enter the counter ion formula following the correct format._",
@@ -34,7 +41,11 @@ coord_compound = st.text_input(
     help="Input format rules are explained in the README.md file",
 )
 
-# 3. Analysis button
+
+# ============================================================
+# Analysis button
+# ============================================================
+
 if st.button("Analysis"):
     # Vérification : La formule principale ne peut pas être vide
     if not coord_compound:
@@ -54,15 +65,20 @@ if st.button("Analysis"):
             st.error(f"Analysis error: {e}")
             st.session_state.analysis_result = None
 
-# 4. Affichage du résultat (si il existe dans le state)
+# ============================================================
+# Render analysis compound
+# ============================================================
+
 if st.session_state.analysis_result:
     st.divider()
     st.markdown(st.session_state.analysis_result)
     st.success("Successful analysis")
 
 st.divider()
-# ----------------------------------------------------------------------------------------
 
+# ============================================================
+# Render visualtion 3D complex
+# ============================================================
 
 st.subheader("Coordination compound 3D rendering")
 
@@ -82,7 +98,7 @@ with st.form("render_form"):
 if submit:
     if coord_compound:
         try:
-            st.session_state.compound_ase = coord_compound
+            st.session_state.compound_ase = cc.create_compound_render(coord_compound)
         except ValueError as e:
             st.error(str(e))
             st.session_state.analysis_result = None
