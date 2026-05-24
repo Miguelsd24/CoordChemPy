@@ -1,6 +1,6 @@
 # CoordChemPy
 
-![PyPI](https://img.shields.io/pypi/v/coordchempy)
+[![PyPI](https://img.shields.io/pypi/v/CoordChemPy)](https://pypi.org/project/CoordChemPy/)
 ![License](https://img.shields.io/github/license/Miguelsd24/ppchem)
 
 ## About CoordChemPy
