@@ -5,16 +5,36 @@
 
 ## About CoordChemPy
 
-CoordChemPy is a Python package designed to assist inorganic chemists and chemistry students by providing tools for analysis and modeling of coordination compounds. This package includes :
+####Read the notebook available in the notebook/coordchem.ipynb for more information####
 
-- Calculation about coordination compounds like electron counting, metal electronic structure
-- ...
+Coordination chemistry plays a central role in inorganic chemistry and appears in catalysis, bioinorganic chemistry, medicinal chemistry, supramolecular chemistry and materials science.
 
-Some approximations and assumptions in order to yield a fully fonctional chemistry package :
-- The ligand database is not exhaustive
-- Only classical trasition metals were considered. Lanthanides, actinides and heavy synthetic metals (Rf -> Cn) were excluded
-- Coordination complexes with more than two metal centers are not incorporated
-- Heterobinuclear complexes are not incorporated and homobinuclear complexes must be symmetric with respect to the two metals
+However, the study of coordination compounds often requires repetitive analytical tasks:
+
+- oxidation state determination,
+- ligand identification,
+- electron counting,
+- geometry prediction,
+- nomenclature generation,
+- and molecular visualization.
+
+To simplify these operations, we developed **CoordChemPy**, an educational Python package dedicated to coordination chemistry analysis.
+
+The objective of the project was to create a toolkit that remains:
+
+- scientifically rigorous,
+- intuitive for undergraduate students,
+- easy to use,
+- and independent from advanced cheminformatics knowledge.
+
+Unlike many chemistry packages, CoordChemPy does not require:
+
+- SMILES notation,
+- graph theory knowledge,
+- external molecular databases,
+- or complicated molecular file formats.
+
+Users can directly manipulate coordination compounds using a simplified inorganic chemistry notation.
 
 ## Installation
 
