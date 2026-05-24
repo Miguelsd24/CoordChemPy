@@ -466,8 +466,6 @@ def counter_ions_verification(
     return clean_formula
 
 
-# === We use this function to verify that the compound follows the chemical rules
-# (This function regroups the cases which were not treated troughout the calculation, analysis, parsing ... functions) === #
 def chemical_rules(formula):
     """
     We use this function to verify that the compound follows the chemical rules
@@ -1172,8 +1170,10 @@ Advanced electronic structure analysis:
 """
 
 
-# === Function which does the electron counting. We use the ionic counting method === #
 def electron_count(formula):
+    """
+    Function which does the electron counting. We use the ionic counting method
+    """
     # We first set the number of electrons as the contributtion of the metal/s center/s
     electrons = oxidation_state(formula)[0] * len(parse_metal(formula))
     # We then add the contribution of each ligand according to the database and of the ligand type
@@ -1195,8 +1195,10 @@ def electron_count(formula):
     return int(electrons) // 2 if len(parse_metal(formula)) == 2 else int(electrons)
 
 
-# === Function which return if the complexs follows the 16 or 18 electron rule === #
 def electrons_probable_complex(formula):
+    """
+    Function which return if the complexs follows the 16 or 18 electron rule
+    """
     if electron_count(formula) == 16 or electron_count(formula) == 18:
         return ""
     elif electron_count(formula) > 22:
@@ -1205,8 +1207,10 @@ def electrons_probable_complex(formula):
         return "This specific coordination complex does not follow the 16 or 18 electron rule."
 
 
-# === Function which calulate the electronic structure of the metal === #
 def electronic_structure(formula):
+    """
+    Function which calulate the electronic structure of the metal
+    """
     # We set the data needed and we create a list to stock the result
     metals = parse_metal(formula)
     per = 0
@@ -1663,8 +1667,15 @@ def naming_counter_ions(
     return " ".join(ion_names)
 
 
-# === Function which returns the IUPAC name of the input coordination compound === #
+# ============================================================
+# COMPOUND FULL NOMENCLATURE
+# ============================================================
+
+
 def naming_compound(formula, formula_counter_ions=None):
+    """
+    Function which returns the IUPAC name of the input coordination compound
+    """
     # We set the data nedded and empty list or string to stock the result
     parsed_data = parse_ligands(formula)
     ligands = parsed_data[1]
@@ -2860,8 +2871,10 @@ Main orchestration utilities used to:
 """
 
 
-# === We use a function to process the formula and return a clean LaTeX formula === #
 def get_clean_formula(formula, formula_counter_ions=None):
+    """
+    We use a function to process the formula and return a clean LaTeX formula
+    """
     clean_formula = formula.replace(" ", "")
     # We replace the m- by μ- for a better display in LaTeX
     clean_bridging = re.sub(r"m-", r"μ-", clean_formula)
@@ -3041,77 +3054,6 @@ def format_percentage(value):
 
 
 # ============================================================
-# SAFE CHEMICAL CHARGE DISPLAY
-# ============================================================
-
-
-def display_charge(charge):
-    """
-    Format a chemical charge for display.
-
-    Examples
-    --------
-    +1 -> "+"
-    +2 -> "2+"
-    -1 -> "-"
-    -3 -> "3-"
-
-    Parameters
-    ----------
-    charge : int
-
-    Returns
-    -------
-    str
-    """
-
-    if charge == 0:
-        return "0"
-
-    if charge == 1:
-        return "+"
-
-    if charge == -1:
-        return "-"
-
-    if charge > 0:
-        return f"{charge}+"
-
-    return f"{abs(charge)}-"
-
-
-# ============================================================
-# CHEMICAL FORMULA BEAUTIFIER
-# ============================================================
-
-
-def beautify_formula(formula):
-    """
-    Convert raw formulas into cleaner
-    Unicode-rendered formulas.
-
-    Parameters
-    ----------
-    formula : str
-
-    Returns
-    -------
-    str
-    """
-
-    result = ""
-
-    for character in formula:
-        if character.isdigit():
-            result += subscript_safe(character)
-
-        else:
-            result += character
-
-    return result
-
-
-# ============================================================
 # SAFE TITLE GENERATOR
 # ============================================================
 
@@ -3252,10 +3194,10 @@ def analyse_compound(
         lines.append(f"**Remarks:** {remark1}")
 
     # --------------------------------------------------------
-    # ELECTRONIC STRUCTURE
+    # ELECTRONIC PROPERTIES
     # --------------------------------------------------------
 
-    lines.append("## Electronic Structure")
+    lines.append("## Electronic properties")
 
     lines.append(f"**Electron count:** {electron_total} e⁻")
 
@@ -3312,8 +3254,10 @@ def analyse_compound(
 # ============================================================
 
 
-# Change the render depending on the interface (Notebook, Streamlit, Terminal)
 def render_analysis(lines):
+    """
+    Change the render depending on the interface (Notebook, Streamlit, Terminal)
+    """
     is_streamlit = False
     is_notebook = False
 
