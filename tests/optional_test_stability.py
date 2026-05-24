@@ -2,7 +2,7 @@
 # 🧪 TEST STABILITY ENGINE
 # ==========================================
 
-### THIS TEST IS NOT RUNNED BY PYTEST, THE GOAL OF THIS TEST IS TO
+### THIS TEST IS NOT RUNNED BY PYTEST
 from coordchempy import StabilityEngine
 
 # ==========================================
