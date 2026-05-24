@@ -1,0 +1,10 @@
+# --- Core Chemistry & Data Science ---
+numpy>=1.24.0
+ase>=3.22.1
+roman>=4.1.0
+
+# --- 3D Visualization ---
+py3Dmol>=2.0.0
+
+# --- Development & Testing ---
+pytest>=7.0.0
