@@ -35,13 +35,11 @@ TESTS = [
 @pytest.mark.parametrize("formula, expected_lines", TESTS)
 def test_analyse_compound(formula, expected_lines):
     """Vérifie le texte renvoyé par le return de la fonction analyse_compound."""
-    # 1. On récupère la grande chaîne de texte renvoyée par ta fonction
+
     result_text = analyse_compound(formula)
 
-    # Si jamais la fonction renvoie None ou autre chose, on le convertit proprement en chaîne
     output_text = str(result_text)
 
-    # 2. On vérifie que chaque élément clé est bien présent dans le texte (sans casser à cause des majuscules)
     for line in expected_lines:
         assert line.lower() in output_text.lower(), (
             f"Élément manquant pour {formula}.\n"
