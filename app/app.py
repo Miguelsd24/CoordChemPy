@@ -122,3 +122,61 @@ if st.session_state.compound_ase:
         st.session_state.compound_ase = None
 
 st.divider()
+# ============================================================
+# Stability Duel Section
+# ============================================================
+
+st.subheader("Stability Duel")
+st.write(
+    "Compare the current compound with another formula to see which one is more stable."
+)
+
+
+comp_A = st.text_input("Compound A :", placeholder="Type the first compound here...")
+comp_B = st.text_input("Compound B :", placeholder="Type the second compound here...")
+
+if st.button("Run Stability Duel"):
+    if not comp_A or not comp_B:
+        st.warning("Please make sure both compound fields are filled to run the duel.")
+    else:
+        try:
+            comp_A_clean = comp_A.strip()
+            comp_B_clean = comp_B.strip()
+
+            # Appel direct de la fonction depuis ton package coordchempy
+            duel_results = cc.stability_duel(comp_A_clean, comp_B_clean)
+
+            # Extraction dynamique des scores pour éviter les KeyErrors liés aux espaces
+            score_A = next(
+                (
+                    v
+                    for k, v in duel_results.items()
+                    if k.startswith("Score") and comp_A_clean in k
+                ),
+                "N/A",
+            )
+            score_B = next(
+                (
+                    v
+                    for k, v in duel_results.items()
+                    if k.startswith("Score") and comp_B_clean in k
+                ),
+                "N/A",
+            )
+
+            # Affichage des scores
+            duel_col1, duel_col2 = st.columns(2)
+            duel_col1.metric(label=f"Score {comp_A_clean}", value=score_A)
+            duel_col2.metric(label=f"Score {comp_B_clean}", value=score_B)
+
+            # Affichage du gagnant
+            winner = duel_results.get("Most Stable", "Tie")
+            if winner == "Tie":
+                st.info("🤝 It's a tie!")
+            else:
+                st.success(f"🏆 Most Stable: **{winner}**")
+
+        except Exception as e:
+            st.error(f"Stability analysis error: {e}")
+
+st.divider()

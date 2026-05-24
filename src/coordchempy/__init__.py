@@ -32,6 +32,7 @@ from coordchempy.coordchem import (
     # Parsing
     parse_metal,
     render_complex,
+    stability_duel,
 )
 
 __all__ = [
@@ -67,4 +68,5 @@ __all__ = [
     # Stability
     "StabilityEngine",
     "StabilityResult",
+    "stability_duel",
 ]

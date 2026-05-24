@@ -2096,30 +2096,19 @@ class StabilityEngine:
 # ==========================================
 # DUEL SYSTEM (UNCHANGED + STABLE)
 # ==========================================
-def duel(A, B):
+def stability_duel(A, B):
     a = StabilityEngine(A)
     b = StabilityEngine(B)
-    cA = a.criteria()
-    cB = b.criteria()
-    breakdown = {}
-    A_w = B_w = 0
-    for k in cA:
-        if cA[k] > cB[k]:
-            winner = "A"
-            A_w += 1
-        elif cB[k] > cA[k]:
-            winner = "B"
-            B_w += 1
-        else:
-            winner = "Tie"
-        breakdown[k] = {"A": cA[k], "B": cB[k], "winner": winner}
+    a_score = a.total_score()
+    b_score = b.total_score()
     return {
-        "A_total": a.total_score(),
-        "B_total": b.total_score(),
-        "winner": "A" if A_w > B_w else "B",
-        "A_wins": A_w,
-        "B_wins": B_w,
-        "breakdown": breakdown,
+        f"Score {A} ": a_score,
+        f"Score {B}": b_score,
+        "Most Stable": f"{A}"
+        if a_score > b_score
+        else f"{B}"
+        if b_score > a_score
+        else "Tie",
     }
 
 
