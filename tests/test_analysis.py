@@ -9,23 +9,11 @@ from coordchempy import analyse_compound
 TESTS = [
     (
         "[Co(NH3)5(Cl)]2+",
-        [
-            "Pentaamminechlorocobalt(III)",
-            "Co (3+)",
-            "[Ar] 4s0 3d6",
-            "18",
-            "Octahedral",
-        ],
+        ['Pentaamminechlorocobalt(III)', 'Metal: Co', 'Formal oxidation state: +3', '[Ar] 4s0 3d6', '18', 'Octahedral']
     ),
     (
         "[Pt(NH3)2(Cl)2]",
-        [
-            "Diamminedichloroplatinum(II)",
-            "Pt (2+)",
-            "6s0 5d8",
-            "16",
-            "Square planar",
-        ],
+        ['Diamminedichloroplatinum(II)', 'Metal: Pt', 'Formal oxidation state: +2', '6s0 5d8', '16', 'Square planar'],
     ),
 ]
 
