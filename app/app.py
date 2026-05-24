@@ -9,7 +9,7 @@ import coordchempy as cc
 
 st.title("CoordChemPy", text_alignment="left")
 st.subheader(
-    "The best python based tool for coordination chemist!",
+    "The Essential Python Toolkit for Coordination Chemistry!",
     divider="gray",
     text_alignment="left",
 )
