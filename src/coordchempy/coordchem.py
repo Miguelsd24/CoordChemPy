@@ -345,7 +345,7 @@ def formula_verification(formula):
     # 1 → Metal-metal bond prefix
     # 2 → Metal symbol
     # 3 → Metal coefficient
-    # 4 → Ligand block
+    # 4 → Ligand block (m- = bridging)
     # 5 → Global charge
     #
     # Supported bond prefixes:
@@ -355,12 +355,12 @@ def formula_verification(formula):
     # q → quadruple
     #
     # Example:
-    # [dRe2(Cl)8]2-
+    # [dRe2(m-Cl)8]2-
     #
     # 1 = d
     # 2 = Re
     # 3 = 2
-    # 4 = (Cl)8
+    # 4 = (m-Cl)8
     # 5 = 2-
     #
     # --------------------------------------
