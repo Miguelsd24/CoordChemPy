@@ -1,25 +1,19 @@
 from coordchempy.coordchem import (
-    # Stability
     StabilityEngine,
     StabilityResult,
-    # Reports
+    analyse_and_render,
     analyse_compound,
-    # Databases
+    beautify_formula,
     bond_order,
-    # Charges
     complex_charge,
     create_compound_render,
     determine_spin_state,
-    # Electronic structure
+    display_charge,
     electron_count,
     electronic_structure,
     export_cif,
-    # Exports
     export_xyz,
-    formula_verification,
-    # Nomenclature
     get_clean_formula,
-    # Geometry
     get_geometry,
     jahn_teller_distortion,
     ligands_charge,
@@ -27,12 +21,13 @@ from coordchempy.coordchem import (
     magnetic_moment,
     metal_charge,
     naming_compound,
+    oxidation_state,
     parse_counter_ions,
     parse_ligands,
-    # Parsing
     parse_metal,
     render_complex,
     stability_duel,
+    validate_formula,
 )
 
 __all__ = [
@@ -40,7 +35,10 @@ __all__ = [
     "complex_charge",
     "ligands_charge",
     "metal_charge",
+    "display_charge",
+    "oxidation_state",
     # Databases & Parsing
+    "validate_formula",
     "bond_order",
     "parse_counter_ions",
     "parse_ligands",
@@ -56,10 +54,12 @@ __all__ = [
     "export_cif",
     "export_xyz",
     # Geometry & 3D Rendering
+    "analyse_and_render",
     "create_compound_render",
     "get_geometry",
     "render_complex",
     # Nomenclature
+    "beautify_formula",
     "get_clean_formula",
     "formula_verification",
     "naming_compound",
