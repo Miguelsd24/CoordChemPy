@@ -11,7 +11,7 @@ requires-python = ">=3.8"
 authors = [
     { name = "Miguel Sousa", email = "miguel.sousaduarte@epfl.ch" }
 ]
-license = { text = "MIT" }
+license = "MIT"
 
 dependencies = [
     "numpy",
