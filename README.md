@@ -5,7 +5,7 @@
 
 ## About CoordChemPy
 
-#### Read the notebook available in the notebook/coordchem.ipynb for more information ####
+#### Read the Jupyter notebook available in notebook/coordchem.ipynb for more information ####
 
 Coordination chemistry plays a central role in inorganic chemistry and appears in catalysis, bioinorganic chemistry, medicinal chemistry, supramolecular chemistry and materials science.
 
