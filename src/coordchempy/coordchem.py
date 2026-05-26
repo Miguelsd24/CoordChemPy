@@ -1398,11 +1398,9 @@ def determine_spin_state(formula):
         spin_type = "High spin", high_spin_configuration(d_electrons)
     else:
         spin_type = (
-            "High spin",
-            high_spin_configuration(d_electrons)
+            ("High spin", high_spin_configuration(d_electrons))
             if not low_spin_possible
-            else "Ambiguous",
-            None,
+            else ("Ambiguous", None)
         )
 
     return spin_type
