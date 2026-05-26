@@ -1301,13 +1301,119 @@ def high_spin_configuration(d_electrons):
     )
 
 
-def determine_spin_state(formula):
-    """
-    Estimate the preferred spin state.
+# ============================================================================================================================================================================================================================================================================
+# MAJOR POST DEADLINES MODIFICATIONS (THESE FUNCTION COME FROM MORE STABLE PREVIOUS VERSIONS OF THE PACKAGE).
+# THIS PART IS THE MOST EXPERIMENTAL PART OF THE PACKAGE RESULTING IN WRONG INFORMATIONS SOMETIMES --->
+# ============================================================================================================================================================================================================================================================================
 
-    Simplified model:
-    - Strong-field ligands → low spin
-    - Weak-field ligands → high spin
+
+def ligand_field_score(formula):
+    # We calculate the ligand field strength score of the compound, which is based on the ligand field strength of the metal at its current oxidation state and the average spectrochemical field strength of the ligands. The score is normalized to be between 0 and 10.
+    metal_sym = parse_metal(formula)[0]
+    m_data = data_metals[metal_sym]
+    charge = metal_charge(formula)
+
+    # Metal ligand-field strength at the current oxidation state
+    ox_key = str(charge) + "+" if charge > 0 else str(charge)
+    ox_states = m_data.get("oxidation_states", {})
+
+    if ox_key in ox_states:
+        metal_lfs = ox_states[ox_key].get(
+            "ligand_field_strength", m_data["HSAB"]["ligand_field_strength"]
+        )
+
+    else:
+        metal_lfs = m_data["HSAB"]["ligand_field_strength"]
+
+    # Average spectrochemical field strength of the ligands
+
+    ligand_keys = parse_ligands(formula)[0]
+
+    avg_lig_fs = sum(
+        data_ligands[lig.replace("m-", "")].get("field_strength", {}).get("value", 5.0)
+        for lig in ligand_keys
+    ) / len(ligand_keys)
+    # value of 5.0 is used as a default if the ligand is not in the data_ligands or if it does not have a specified field strength to not bias the mean value.
+
+    score = (metal_lfs + avg_lig_fs) / 2
+
+    return score
+
+
+THRESHOLD_HS = 6.1  # score below this → high spin
+THRESHOLD_LS = 6.4  # score above this → low spin
+ROW_THRESHOLD_OFFSET = {
+    4: 0.0,
+    5: -1.0,
+    6: -1.5,
+}  # 4d and 5d metals are more likely to be low spin than 3d metals, so we adjust the thresholds for these periods to reflect this trend. The offset values are determined based on empirical data.
+
+
+def determine_spin_state(formula):
+    d_electrons = oxidation_state(formula)[0]
+    metal_symbol = parse_metal(formula)[0]
+    period = data_metals[metal_symbol]["period"]
+
+    # d0, d10: HS/LS distinction is meaningless
+
+    if d_electrons in [0, 10] or get_geometry(formula)[1] != "Octahedral":
+        spin_type = "N/A"
+
+        return spin_type, None
+
+    # d9 has the same filling for HS and LS so it doesn't make sense to distinguish them, we can just say it's high spin.
+    if d_electrons == 9:
+        spin_type = "High spin"
+
+        return spin_type, high_spin_configuration(d_electrons)
+
+    # d1, d2, d3: always high spin
+
+    if d_electrons in [1, 2, 3]:
+        spin_type = "High spin"
+
+        return spin_type, high_spin_configuration(d_electrons)
+
+    # d4 to d8: score-based decision
+
+    score = ligand_field_score(formula)
+
+    # Adjust thresholds for the metal's period (4d/5d split more → easier LS)
+
+    offset = ROW_THRESHOLD_OFFSET.get(period, 0.0)
+    threshold_hs = THRESHOLD_HS + offset
+    threshold_ls = THRESHOLD_LS + offset
+
+    # Spin preference in the data if there is an ambiguous score.
+
+    low_spin_possible = (
+        data_metals[metal_symbol]
+        .get("spin_preference", {})
+        .get("low_spin_possible", True)
+    )
+    # .get(..,true) in the case where the metal data does not specify a spin preference, we assume that low spin is possible.
+    if score > threshold_ls:
+        spin_type = "Low spin", low_spin_configuration(d_electrons)
+    elif score < threshold_hs:
+        spin_type = "High spin", high_spin_configuration(d_electrons)
+    else:
+        spin_type = (
+            "High spin",
+            high_spin_configuration(d_electrons)
+            if not low_spin_possible
+            else "Ambiguous",
+            None,
+        )
+
+    return spin_type
+
+
+def jahn_teller_distortion(formula):
+    """
+    Predict Jahn–Teller distortion tendencies.
+
+    Distortion occurs when degenerate orbitals
+    are asymmetrically occupied.
 
     Parameters
     ----------
@@ -1316,39 +1422,45 @@ def determine_spin_state(formula):
 
     Returns
     -------
-    tuple
-        (
-            spin_label,
-            (
-                paired_electrons,
-                unpaired_electrons,
-            ),
-        )
+    str
+        Distortion prediction.
     """
 
-    ligands = parse_ligands(formula)[0]
+    if get_geometry(formula)[1] != "Octahedral":
+        return "The Jahn-Teller distorsion is not relevant for this compound"  # POST DEAD LINE MODIFICATION
 
-    strong_field_score = 0
+    spin_state = determine_spin_state(formula)
 
-    for ligand in ligands:
-        ligand = ligand.replace("m-", "")
+    if spin_state[1] is None:
+        return "N/A"
 
-        strong_field_score += data_ligands[ligand].get("field", 1)
-
-    average_field = strong_field_score / len(ligands)
-
-    d_electrons = oxidation_state(formula)[0]
-
-    if average_field >= 3:
-        return (
-            "Low spin",
-            low_spin_configuration(d_electrons),
-        )
-
-    return (
-        "High spin",
-        high_spin_configuration(d_electrons),
+    orbitals = fill_d_orbitals(
+        spin_state[1][0],
+        spin_state[1][1],
     )
+
+    # --------------------------------------------------------
+    # t2g asymmetry
+    # --------------------------------------------------------
+
+    for index in range(2):
+        if orbitals[index] != orbitals[index + 1]:
+            return "Weak Jahn-Teller distortion"
+
+    # --------------------------------------------------------
+    # eg asymmetry
+    # --------------------------------------------------------
+
+    for index in range(3, 4):
+        if orbitals[index] != orbitals[index + 1]:
+            return "Strong Jahn-Teller distortion"
+
+    return "No Jahn-Teller distortion"
+
+
+# ============================================================================================================================================================================================================================================================================
+# MAJOR POST DEADLINES MODIFICATIONS <----
+# ============================================================================================================================================================================================================================================================================
 
 
 def fill_d_orbitals(
@@ -1393,7 +1505,7 @@ def fill_d_orbitals(
 
 def magnetic_moment(formula):
     """
-    Estimate the spin-only magnetic moment.
+    Estimate the spin-only magnetic moment. (UNSTABLE, THUS NOT DISPLAYED IN ANALYSIS)
 
     Formula used:
         μ = √(n(n + 2))
@@ -1412,6 +1524,9 @@ def magnetic_moment(formula):
     """
 
     spin_state = determine_spin_state(formula)
+
+    if spin_state[1] is None:
+        return "N/A"
 
     unpaired = spin_state[1][1]
 
@@ -1440,6 +1555,9 @@ def magnetic_behavior(formula):
 
     spin_state = determine_spin_state(formula)
 
+    if spin_state[1] is None:
+        return "N/A"
+
     unpaired = spin_state[1][1]
 
     if unpaired == 0:
@@ -1450,7 +1568,7 @@ def magnetic_behavior(formula):
 
 def crystal_field_stabilization_energy(formula):
     """
-    Estimate the crystal field stabilization energy (CFSE).
+    Estimate the crystal field stabilization energy (CFSE). (UNSTABLE, THUS NOT DISPLAYED IN ANALYSIS)
 
     Octahedral approximation:
         CFSE = (-0.4 × t2g) + (0.6 × eg)
@@ -1475,50 +1593,6 @@ def crystal_field_stabilization_energy(formula):
     cfse = -0.4 * t2g + 0.6 * eg
 
     return round(cfse, 2)
-
-
-def jahn_teller_distortion(formula):
-    """
-    Predict Jahn–Teller distortion tendencies.
-
-    Distortion occurs when degenerate orbitals
-    are asymmetrically occupied.
-
-    Parameters
-    ----------
-    formula : str
-        Coordination complex formula.
-
-    Returns
-    -------
-    str
-        Distortion prediction.
-    """
-
-    spin_state = determine_spin_state(formula)
-
-    orbitals = fill_d_orbitals(
-        spin_state[1][0],
-        spin_state[1][1],
-    )
-
-    # --------------------------------------------------------
-    # t2g asymmetry
-    # --------------------------------------------------------
-
-    for index in range(2):
-        if orbitals[index] != orbitals[index + 1]:
-            return "Weak Jahn-Teller distortion"
-
-    # --------------------------------------------------------
-    # eg asymmetry
-    # --------------------------------------------------------
-
-    for index in range(3, 4):
-        if orbitals[index] != orbitals[index + 1]:
-            return "Strong Jahn-Teller distortion"
-
-    return "No Jahn-Teller distortion"
 
 
 # ============================================================
@@ -3135,9 +3209,9 @@ def analyse_compound(
 
     magnetic_type = magnetic_behavior(formula)
 
-    magnetic_value = magnetic_moment(formula)
+    # magnetic_value = magnetic_moment(formula) # POST DEAD LINE MODIFICATION
 
-    cfse = crystal_field_stabilization_energy(formula)
+    # cfse = crystal_field_stabilization_energy(formula) # POST DEAD LINE MODIFICATION
 
     jahn_teller = jahn_teller_distortion(formula)
 
@@ -3205,9 +3279,11 @@ def analyse_compound(
 
     lines.append(f"**Magnetic behavior:** {magnetic_type}")
 
-    lines.append(f"**Magnetic moment:** {magnetic_value} BM")
+    lines.append(
+        "**Magnetic moment:** (Under developement)"
+    )  # POST DEAD LINE MODIFICATION
 
-    lines.append(f"**CFSE:** {cfse}")
+    lines.append("**CFSE:** (Under developement)")  # POST DEAD LINE MODIFICATION
 
     lines.append(f"**Jahn–Teller effect:** {jahn_teller}")
 
